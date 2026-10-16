@@ -19,7 +19,11 @@ giờ bấm vào các ô để xem"). So:
   the exam question under each part). Concepts are taught on the question page that uses them ("Hiểu
   nhanh"), not on separate pages.
 - **Importance is explicit.** `<Must>` (yellow highlight) marks what to memorise; every Must also appears
-  on `Reference.jsx` ("Bảng phải thuộc"). Each `<Recipe>` has a `skip` line listing what the exam never asks.
+  in a block of `Lookup.jsx`. Each `<Recipe>` has a `skip` line listing what the exam never asks.
+- **"Bảng tra" next to each question page.** The user asked for a lookup table at the side. The page's
+  `lookup` keys in `GROUPS` pick `Lookup.jsx` blocks (offsets, codes, formulas, and from 2b on the numbers
+  found in 2a for the mini and real disk). It is a sticky right column at ≥1360px and a drawer behind a
+  "Bảng tra" button below that. "Bảng phải thuộc" (`Reference.jsx`) renders the same blocks.
 - **Pages link to each other.** `<DiskStrip on=…>` shows where on the disk the page works; `<Known>` lists
   the numbers taken from earlier questions; results say which later question uses them.
 - **Nothing hidden behind a click.** No `<details>`, no "bấm để xem" checks or answers, no click-to-explain
@@ -62,7 +66,7 @@ giờ bấm vào các ô để xem"). So:
 | `client/src/fat/annotate.test.js` | Pins the mini dumps to the answers shown on the page |
 | `client/src/fat/baitap.fixture.json`, `baitap.test.js` | Dumps transcribed from Baitap_HTTT.pdf (test data only) and the test that pins every number in `RealExercise.jsx` |
 | `client/src/components/` | `HexDump` (coloured dump + list), `Calculators`, shared `Study` blocks |
-| `client/src/sections/` | `Start`, `HexSkills`, `DiskOverview`, `Mbr` (câu 1), `Boot` (2a), `Fat` (2b), `Tree` (2b), `Operations` (2c–e), `RealExercise` (real-exercise block per question), `Reference` (Bảng phải thuộc + lỗi hay gặp), `Glossary` (+ calculators) |
+| `client/src/sections/` | `Start`, `HexSkills`, `DiskOverview`, `Mbr` (câu 1), `Boot` (2a), `Fat` (2b), `Tree` (2b), `Operations` (2c–e), `RealExercise` (real-exercise block per question), `Lookup` (memorise blocks for the Bảng tra column), `Reference` (Bảng phải thuộc + lỗi hay gặp), `Glossary` (+ calculators) |
 | `client/vercel.json` | Vercel build settings |
 | `deploy/vm/` | VM stack: `docker-compose.yml` (api + caddy), `Caddyfile`, `deploy.sh` (run by CD), `setup.sh` (one-time Docker install) |
 | `.github/workflows/deploy-api.yml` | CD for the API to the VM |
@@ -139,8 +143,9 @@ never in the repo.
   formula means updating both the prose answers and the tests.
 - **`what` and `calc` strings from `annotate.js` render as HTML.** Any text that comes from dump bytes
   must go through `esc()`. `entryRows` returns plain text that React escapes.
-- **A `<Must>` added to a question page must also go on `Reference.jsx`**, and a new trap in `<Traps>`
-  belongs in its "Lỗi hay gặp" list.
+- **A `<Must>` added to a question page must also go in its `Lookup.jsx` block**, and a new trap in
+  `<Traps>` belongs in the "Lỗi hay gặp" list of `Reference.jsx`. The numbers in `KnownNumbers` repeat the
+  2a/2b answers; change them with the dumps.
 - **Don't put `Urls` in `appsettings.json`.** It overrides `ASPNETCORE_URLS`/`HTTP_PORTS`, so the container
   binds to `localhost` and can't be reached. The local port (5080) lives in
   `server/Properties/launchSettings.json`, which only `dotnet run` reads.

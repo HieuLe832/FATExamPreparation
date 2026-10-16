@@ -312,6 +312,45 @@ dl.glossary dd { margin: 2px 0 0; font-size: 0.94rem; }
 .tool output { font-family: var(--font-mono); font-size: 0.86rem; color: var(--muted); overflow-wrap: anywhere; }
 .tool output b { color: var(--accent); }
 
+/* ---------- "Bảng tra": lookup column next to each question page (drawer on narrower screens) ---------- */
+.lookup { display: none; gap: 18px; align-content: start; background: var(--surface); }
+.lookup-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding-bottom: 10px; border-bottom: 2px solid var(--line); }
+.lookup-head b { display: block; font-family: var(--font-display); font-size: 1.1rem; }
+.lookup-head span { font-family: var(--font-mono); font-size: 0.74rem; color: var(--muted); }
+.lookup-close { font: inherit; font-size: 0.85rem; padding: 5px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.lookup-block { display: grid; gap: 6px; min-width: 0; }
+.lookup-block h3 { font-size: 0.9rem; color: var(--accent); }
+table.lk { width: 100%; border-collapse: collapse; font-size: 0.84rem; line-height: 1.45; font-variant-numeric: tabular-nums; }
+table.lk th, table.lk td { text-align: left; vertical-align: top; padding: 5px 6px; border-bottom: 1px solid var(--line); }
+table.lk tbody th { font-family: var(--font-mono); font-weight: 600; font-size: 0.8rem; white-space: nowrap; padding-left: 0; }
+table.lk thead th { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); padding-left: 0; }
+table.lk + table.lk { margin-top: 10px; }
+table.lk.stack th, table.lk.stack td { display: block; padding-left: 0; }
+table.lk.stack th { border-bottom: 0; padding-bottom: 0; }
+table.lk code { font-size: 0.85em; }
+table.known-table td { font-family: var(--font-mono); font-size: 0.8rem; }
+.lookup-block.wide { max-width: 760px; }
+.lookup-block.wide table.lk { font-size: 0.95rem; }
+.lookup-block.wide table.lk tbody th { font-size: 0.88rem; width: 34%; }
+.lookup-overlay { display: none; }
+.lookup-btn { display: none; }
+
+@media (min-width: 1360px) {
+  .topbar-inner, .shell { max-width: 1600px; }
+  .shell { grid-template-columns: 250px minmax(0, 1fr) 320px; gap: 40px; }
+  .lookup { display: grid; grid-column: 3; position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--topbar-h) + 24px); align-self: start;
+    max-height: calc(100vh - var(--topbar-h) - 48px); overflow-y: auto; border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow); }
+  .lookup-close { display: none; }
+}
+@media (max-width: 1359.98px) {
+  .lookup.open { display: grid; position: fixed; z-index: 26; top: calc(env(safe-area-inset-top, 0px) + var(--topbar-h)); right: 0; bottom: 0; width: min(360px, 100vw);
+    overflow-y: auto; border-left: 1px solid var(--line); box-shadow: var(--shadow); padding: 16px max(18px, env(safe-area-inset-right, 0px)) 40px 18px; }
+  .lookup-overlay { display: block; position: fixed; inset: 0; z-index: 25; background: rgb(0 0 0 / 0.35); }
+  .lookup-btn { display: block; position: fixed; z-index: 22; right: max(16px, env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    font: inherit; font-weight: 600; font-size: 0.92rem; padding: 10px 18px; border-radius: 99px; border: 0; background: var(--ink); color: var(--surface); box-shadow: var(--shadow); cursor: pointer; }
+  .shell.has-lookup { padding-bottom: 120px; }
+}
+
 /* ---------- phones ---------- */
 @media (max-width: 900px) {
   h1 { font-size: 1.75rem; }
@@ -340,7 +379,7 @@ dl.glossary dd { margin: 2px 0 0; font-size: 0.94rem; }
 }
 
 @media print {
-  .topbar, .sidebar, .pager, .crumb { display: none !important; }
+  .topbar, .sidebar, .pager, .crumb, .lookup, .lookup-btn { display: none !important; }
   .shell { display: block; padding: 0; }
   main { max-width: none; animation: none; }
   .recipe, .hexwrap { box-shadow: none; }

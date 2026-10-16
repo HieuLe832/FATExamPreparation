@@ -9,23 +9,25 @@ import Tree from "./sections/Tree.jsx";
 import Operations from "./sections/Operations.jsx";
 import MustKnow from "./sections/Reference.jsx";
 import Glossary from "./sections/Glossary.jsx";
+import { LookupBlocks } from "./sections/Lookup.jsx";
 
 // One page is shown at a time; the URL hash (#cau-1, #cau-2a, …) says which. The course follows the exam:
-// two foundation pages, then one page per exam question, then the review sheet.
+// two foundation pages, then one page per exam question, then the review sheet. `lookup` lists the
+// Lookup.jsx blocks shown in the "Bảng tra" column next to the page.
 const GROUPS = [
   { name: "Bắt đầu", steps: [
     { id: "bat-dau", label: "Đề thi gồm những gì", Page: Start },
   ] },
   { name: "Nền tảng", steps: [
-    { id: "hex", label: "Đọc hex dump", Page: HexSkills },
+    { id: "hex", label: "Đọc hex dump", Page: HexSkills, lookup: ["hex"] },
     { id: "o-dia", label: "Ổ đĩa được chia thế nào", Page: DiskOverview },
   ] },
   { name: "Giải từng câu", steps: [
-    { id: "cau-1", label: "Câu 1 · MBR", Page: Mbr },
-    { id: "cau-2a", label: "Câu 2a · Boot sector", Page: Boot },
-    { id: "cau-2b-fat", label: "Câu 2b · Bảng FAT", Page: Fat },
-    { id: "cau-2b-cay", label: "Câu 2b · Cây thư mục", Page: Tree },
-    { id: "cau-2cde", label: "Câu 2c–e · Move, Xóa, Copy", Page: Operations },
+    { id: "cau-1", label: "Câu 1 · MBR", Page: Mbr, lookup: ["mbr", "hex"] },
+    { id: "cau-2a", label: "Câu 2a · Boot sector", Page: Boot, lookup: ["boot", "hex"] },
+    { id: "cau-2b-fat", label: "Câu 2b · Bảng FAT", Page: Fat, lookup: ["known", "fat", "hex"] },
+    { id: "cau-2b-cay", label: "Câu 2b · Cây thư mục", Page: Tree, lookup: ["known", "dir", "fat"] },
+    { id: "cau-2cde", label: "Câu 2c–e · Move, Xóa, Copy", Page: Operations, lookup: ["knownFull", "ops"] },
   ] },
   { name: "Ôn tập", steps: [
     { id: "phai-thuoc", label: "Bảng phải thuộc", Page: MustKnow },
@@ -110,13 +112,20 @@ function Pager({ step, onDone }) {
 export default function App() {
   const [step, setStep] = useState(stepFromHash);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [lookupOpen, setLookupOpen] = useState(false);
   const { done, markDone, reset } = useProgress();
 
   useEffect(() => {
-    const onHash = () => { setStep(stepFromHash()); setMenuOpen(false); window.scrollTo(0, 0); };
+    const onHash = () => { setStep(stepFromHash()); setMenuOpen(false); setLookupOpen(false); window.scrollTo(0, 0); };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
+  useEffect(() => {
+    if (!lookupOpen) return undefined;
+    const onKey = (e) => { if (e.key === "Escape") setLookupOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lookupOpen]);
   useEffect(() => { document.title = `${step.label} · FAT`; }, [step]);
 
   const finished = LESSONS.filter((s) => done.has(s.id)).length;
@@ -142,7 +151,7 @@ export default function App() {
         </div>
       </header>
 
-      <div className="shell">
+      <div className={"shell" + (step.lookup ? " has-lookup" : "")}>
         <aside id="outline-panel" className={"sidebar" + (menuOpen ? " open" : "")}>
           <Outline current={step.id} done={done} onPick={closeMenu} />
           {finished > 0 && <button type="button" className="reset" onClick={reset}>Xóa tiến độ</button>}
@@ -155,7 +164,24 @@ export default function App() {
           <Page lessons={LESSONS} done={done} groups={GROUPS} />
           <Pager step={step} onDone={() => markDone(step.id)} />
         </main>
+
+        {step.lookup && (
+          <aside id="lookup-panel" className={"lookup" + (lookupOpen ? " open" : "")} aria-label="Bảng tra">
+            <div className="lookup-head">
+              <div><b>Bảng tra</b><span>{step.label}</span></div>
+              <button type="button" className="lookup-close" onClick={() => setLookupOpen(false)}>Đóng</button>
+            </div>
+            <LookupBlocks keys={step.lookup} />
+          </aside>
+        )}
       </div>
+
+      {step.lookup && (
+        <button type="button" className="lookup-btn" aria-expanded={lookupOpen} aria-controls="lookup-panel" onClick={() => setLookupOpen((o) => !o)}>
+          {lookupOpen ? "Đóng bảng tra" : "Bảng tra"}
+        </button>
+      )}
+      {lookupOpen && <div className="lookup-overlay" aria-hidden="true" onClick={() => setLookupOpen(false)} />}
     </div>
   );
 }
