@@ -29,9 +29,12 @@ no copied hex dumps. Explain FAT with analogies: directory = mục lục, FAT = 
   Structure: `Controllers/` (`[ApiController]` classes, no minimal-API `Map*` endpoints), `Services/`
   (interface + implementation, registered in DI), `Models/`, `Data/`. The user wants this conventional
   controller layout.
-- Frontend and backend are deployed separately: API on Azure App Service (Linux, .NET 8, code deploy via
-  `.github/workflows/deploy-api.yml`), frontend on Vercel (root directory `client`). Steps for the user are
-  in `docs/DEPLOY.md` (Vietnamese). `server/Dockerfile` is kept for container hosting.
+- Frontend and backend are deployed separately, both continuously on push to `main`:
+  - API on the user's **Azure VM (Ubuntu 22.04)**. `.github/workflows/deploy-api.yml` tests, builds
+    `server/Dockerfile`, pushes `ghcr.io/hieule832/fat-guide-api:<sha>`, copies `deploy/vm/` to
+    `/opt/fat-guide` over SSH and runs `deploy.sh` (docker compose: API + Caddy for HTTPS).
+  - Frontend on Vercel (root directory `client`), which auto-deploys from GitHub.
+  - Steps for the user are in `docs/DEPLOY.md` (Vietnamese).
 - PostgreSQL or a cache: don't add one yourself. Ask the user, who will create a Supabase database or an
   Upstash Redis. The guide needs neither today.
 - Decide everything else yourself without asking.
@@ -52,6 +55,8 @@ no copied hex dumps. Explain FAT with analogies: directory = mục lục, FAT = 
 | `client/src/components/` | `HexDump` (clickable dump), `Calculators`, shared `Study` blocks |
 | `client/src/sections/` | `Intro` (start, byte/hex), `WhatIsFat`, `Concepts` (6 concept pages), `MiniExercise`, `Mbr`, `Volume`, `Operations`, `RealExercise`, `Reference`, `Glossary` |
 | `client/vercel.json` | Vercel build settings |
+| `deploy/vm/` | VM stack: `docker-compose.yml` (api + caddy), `Caddyfile`, `deploy.sh` (run by CD), `setup.sh` (one-time Docker install) |
+| `.github/workflows/deploy-api.yml` | CD for the API to the VM |
 | `docs/DEPLOY.md` | Deploy guide for the user (Azure + Vercel) |
 
 ## Commands
@@ -81,9 +86,9 @@ There are no `.env` files in the repo; only `client/.env.example` (a template, t
 | Frontend, local | `client/.env.local` (gitignored) or the shell | `API_PROXY_TARGET` (Vite proxy target, default `http://localhost:5080`), `VITE_API_BASE_URL` (leave empty) |
 | Frontend, Vercel | Project Settings → Environment Variables | `VITE_API_BASE_URL=https://<azure-app>` (build time) |
 | Backend, local | `appsettings.Development.json` + `launchSettings.json` | `Cors:AllowedOrigins`, `ASPNETCORE_ENVIRONMENT=Development`, port 5080 |
-| Backend, Azure | Web App → Environment variables → App settings | `Cors__AllowedOrigins__0=https://<project>.vercel.app` |
-| Backend, Docker | `docker run -e …` | `Cors__AllowedOrigins__0=…`; `ASPNETCORE_URLS` is set in the Dockerfile |
-| GitHub Actions | repo secret + workflow `env:` | `AZURE_WEBAPP_PUBLISH_PROFILE` (secret), `AZURE_WEBAPP_NAME` |
+| Backend, VM | `/opt/fat-guide/.env`, written by the workflow each deploy | `API_IMAGE`, `API_DOMAIN`, `FRONTEND_ORIGIN` (→ `Cors__AllowedOrigins__0`) |
+| Backend, Docker locally | `docker run -e …` | `Cors__AllowedOrigins__0=…`; `ASPNETCORE_URLS` is set in the Dockerfile |
+| GitHub Actions | repo secret + repo variables | secret `VM_SSH_KEY`; variables `VM_HOST`, `VM_USER`, `API_DOMAIN`, `FRONTEND_ORIGIN` |
 
 ASP.NET does not read `.env` files; use appsettings, environment variables or `dotnet user-secrets`. Any
 future secret (e.g. a Supabase connection string) goes in user-secrets locally and Azure App Settings,
@@ -130,12 +135,20 @@ never in the repo.
   `import.meta.env`, not into `process.env` of the config, so a plain `process.env` read ignores `.env.local`.
 - **`VITE_API_BASE_URL` is baked in at build time.** Changing it on Vercel needs a redeploy. Use the origin
   only (`https://x.azurewebsites.net`), no `/api`; a trailing slash is stripped in `api/hexDumps.js`.
-- **CORS origins must match exactly** (scheme, host, no trailing slash). On Azure they're App Settings named
-  `Cors__AllowedOrigins__0`, `__1`…; Vercel preview URLs differ from production and are blocked unless added.
-- **Azure F1 sleeps when idle**, so the first request can take ~20 s. `HexDump` shows a "Thử lại" button;
-  don't remove it.
-- **Set `AZURE_WEBAPP_NAME` in `deploy-api.yml`** to the real Web App name; the workflow also needs the
-  `AZURE_WEBAPP_PUBLISH_PROFILE` secret.
+- **CORS origins must match exactly** (scheme, host, no trailing slash). On the VM the single allowed origin
+  is the `FRONTEND_ORIGIN` repo variable; Vercel preview URLs differ from production and are blocked.
+- **The API must be served over HTTPS.** The Vercel page is `https://`, and browsers block calls to a plain
+  `http://IP` (mixed content). That's why Caddy sits in front with a domain (Azure Public IP "DNS name
+  label" → `*.cloudapp.azure.com`) and needs NSG inbound 80 and 443 open.
+- **The `.pem` key is a secret.** Never ask the user to paste it into chat, never read or commit it
+  (`*.pem` is gitignored). It only lives in the `VM_SSH_KEY` GitHub secret.
+- **GHCR image names must be lowercase**: the workflow uses `${GITHUB_REPOSITORY_OWNER,,}`. The VM logs in
+  with the job's `GITHUB_TOKEN` (sent on stdin) for each deploy and `deploy.sh` logs out afterwards.
+- **Test the VM stack locally before changing it**: build the image, copy `docker-compose.yml` and
+  `Caddyfile` to a scratch dir with `.env` (`API_DOMAIN=localhost`), `docker compose -p test up -d`, then
+  `curl -k https://localhost/api/health`. Lint the workflow with `docker run rhysd/actionlint:1.7.1` and the
+  scripts with `koalaman/shellcheck:v0.10.0`.
+- **`HexDump` keeps its "Thử lại" button** for when the API is restarting during a deploy; don't remove it.
 - **Swagger is Development-only.** In the container (Production) `/swagger` is 404 on purpose.
 - **Don't serve the frontend from the backend again** (no `wwwroot`, `UseStaticFiles` or SPA fallback). The
   user asked for them to be separate.

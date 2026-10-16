@@ -35,7 +35,7 @@ export default function HexDump({ id, focus, from, to, bands }) {
             <div className="calc">
               {import.meta.env.DEV
                 ? <>Chạy backend bằng <b>dotnet run --project server</b> rồi bấm thử lại.</>
-                : "Máy chủ có thể đang khởi động sau một lúc không ai dùng. Đợi khoảng 20 giây rồi bấm thử lại."}
+                : "Không kết nối được máy chủ, có thể nó đang cập nhật. Đợi vài giây rồi bấm thử lại."}
             </div>
             <button type="button" className="retry" onClick={() => setAttempt((n) => n + 1)}>Thử lại</button>
           </>

@@ -1,21 +1,36 @@
-name: Deploy API to Azure
+name: Deploy API to Azure VM
+
+# On every push to main that touches the backend: test, build the Docker image, push it to GHCR,
+# then SSH into the VM and restart the stack in /opt/fat-guide (see deploy/vm/).
+#
+# Repo settings → Secrets and variables → Actions:
+#   secret   VM_SSH_KEY       private key (.pem content) for the VM user
+#   variable VM_HOST          VM public IP or DNS name
+#   variable VM_USER          SSH user, e.g. azureuser
+#   variable API_DOMAIN       domain pointing at the VM, e.g. fat-api.southeastasia.cloudapp.azure.com
+#   variable FRONTEND_ORIGIN  e.g. https://fat-guide.vercel.app (allowed by CORS)
 
 on:
   push:
     branches: [main]
-    paths: ["server/**", "client/src/fat/**", ".github/workflows/deploy-api.yml"]
+    paths: ["server/**", "client/src/fat/**", "deploy/vm/**", ".github/workflows/deploy-api.yml"]
   workflow_dispatch:
 
-env:
-  AZURE_WEBAPP_NAME: fat-guide-api # change to your Azure Web App name
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: deploy-api
+  cancel-in-progress: false
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # The decoder tests check server/Data/hex-dumps.json against the published answers.
+      # The decoder tests check server/Data/hex-dumps.json against the answers on the page.
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -25,10 +40,71 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
-      - run: dotnet publish server/FatGuide.Api.csproj -c Release -o publish
+      - run: dotnet build server/FatGuide.Api.csproj -c Release
 
-      - uses: azure/webapps-deploy@v3
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      VM_HOST: ${{ vars.VM_HOST }}
+      VM_USER: ${{ vars.VM_USER }}
+      API_DOMAIN: ${{ vars.API_DOMAIN }}
+      FRONTEND_ORIGIN: ${{ vars.FRONTEND_ORIGIN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check settings
+        run: |
+          for v in VM_HOST VM_USER API_DOMAIN FRONTEND_ORIGIN; do
+            [ -n "${!v}" ] || { echo "::error::Repository variable $v is not set"; exit 1; }
+          done
+
+      - name: Name the image
+        # GHCR names must be lowercase; tag with the short commit SHA so each deploy is traceable.
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/fat-guide-api:${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+
+      - uses: docker/login-action@v3
         with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: publish
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: server
+          push: true
+          tags: ${{ env.IMAGE }}
+
+      - name: Set up SSH
+        env:
+          VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+        run: |
+          [ -n "$VM_SSH_KEY" ] || { echo "::error::Secret VM_SSH_KEY is not set"; exit 1; }
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$VM_SSH_KEY" > ~/.ssh/vm
+          chmod 600 ~/.ssh/vm
+          ssh-keyscan -H "$VM_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Deploy to the VM
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          target="$VM_USER@$VM_HOST"
+          printf 'API_IMAGE=%s\nAPI_DOMAIN=%s\nFRONTEND_ORIGIN=%s\n' "$IMAGE" "$API_DOMAIN" "$FRONTEND_ORIGIN" > deploy/vm/.env
+          scp -i ~/.ssh/vm deploy/vm/docker-compose.yml deploy/vm/Caddyfile deploy/vm/deploy.sh deploy/vm/.env "$target:/opt/fat-guide/"
+          # The job token lets the VM pull this image; it is sent on stdin and expires when the job ends.
+          printf '%s\n' "$GHCR_TOKEN" | ssh -i ~/.ssh/vm "$target" "docker login ghcr.io -u '${{ github.actor }}' --password-stdin"
+          ssh -i ~/.ssh/vm "$target" "bash /opt/fat-guide/deploy.sh"
+
+      - name: Check the public URL
+        run: |
+          for _ in $(seq 1 20); do
+            if curl -fsS "https://$API_DOMAIN/api/health"; then echo; exit 0; fi
+            sleep 5
+          done
+          echo "::error::https://$API_DOMAIN/api/health is not reachable (NSG ports 80/443? DNS?)"
+          exit 1
+
+      - name: Remove the key
+        if: always()
+        run: rm -f ~/.ssh/vm

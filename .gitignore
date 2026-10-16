@@ -6,6 +6,8 @@ server/obj/
 
 # local secrets, never commit
 supabase password
+*.pem
+*.PublishSettings
 *.env
 .env*
 !.env.example

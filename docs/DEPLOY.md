@@ -1,116 +1,118 @@
-# Deploy: backend lên Azure, frontend lên Vercel
+# Deploy: backend lên Azure VM, frontend lên Vercel
 
-Kiến trúc sau khi deploy:
+Sau khi làm xong, mỗi lần push lên `main` thì cả hai **tự động deploy**:
 
 ```
-Trình duyệt ──► Vercel (React, client/)  ──fetch──►  Azure App Service (API, server/)
-               https://<project>.vercel.app          https://<app>.azurewebsites.net/api/...
+push lên main ─┬─► GitHub Actions: chạy test → build Docker image → đẩy lên GHCR → SSH vào VM → khởi động lại
+               └─► Vercel: tự build và deploy frontend
+
+Trình duyệt ──► https://<project>.vercel.app ──fetch──► https://<API_DOMAIN>/api/...
+                                                        (VM: Caddy lo HTTPS → container API)
 ```
 
-Làm theo đúng thứ tự: **đẩy code lên GitHub → backend → frontend → quay lại mở CORS cho domain Vercel.**
-Frontend cần URL của backend, còn backend cần domain của frontend, nên phải đi vòng như vậy.
+Vì sao cần Caddy và một domain: trang Vercel chạy `https://`, mà trình duyệt **chặn** trang `https` gọi tới
+API `http://<IP>` (lỗi *mixed content*). Caddy tự xin và tự gia hạn chứng chỉ HTTPS miễn phí, nhưng cần một
+tên miền trỏ về VM. Azure cho tên miền miễn phí dạng `<tên>.<vùng>.cloudapp.azure.com`.
+
+Làm theo thứ tự dưới đây. Mỗi bước chỉ làm **một lần**.
 
 ---
 
-## 0. Đẩy code lên GitHub
+## 1. Azure: mở cổng và đặt tên miền cho VM
 
-Cả Vercel lẫn GitHub Actions (để deploy lên Azure) đều lấy code từ GitHub.
+**Mở cổng 80 và 443.** Portal → VM → **Networking** (Network settings) → **Add inbound port rule**:
 
-1. Tạo repo trống trên github.com (không tick README hay .gitignore).
-2. Trong thư mục dự án:
-
-   ```bash
-   git remote add origin https://github.com/<tên-bạn>/<tên-repo>.git
-   git push -u origin main
-   ```
-
-File `supabase password` đã nằm trong `.gitignore` nên không bị đẩy lên. Trước khi push, kiểm tra lại bằng
-`git ls-files | grep -i supabase`: lệnh này phải không in ra gì.
-
----
-
-## 1. Backend lên Azure App Service
-
-Cách này chạy thẳng code .NET, không cần Docker hay Container Registry, và dùng được gói **Free (F1)**.
-
-### 1.1 Tạo Web App
-
-Vào portal.azure.com → **Create a resource** → **Web App**:
-
-| Ô | Chọn |
+| Ô | Giá trị |
 | --- | --- |
-| Resource group | Tạo mới, ví dụ `fat-guide` |
-| Name | ví dụ `fat-guide-api` (phải là tên chưa ai dùng) |
-| Publish | **Code** |
-| Runtime stack | **.NET 8 (LTS)** |
-| Operating System | **Linux** |
-| Region | Southeast Asia (gần Việt Nam nhất) |
-| Pricing plan | **Free F1** |
+| Destination port ranges | `80,443` |
+| Protocol | TCP |
+| Action | Allow |
+| Name | `allow-http-https` |
 
-Bấm **Review + create** → **Create**. Xong thì mở Web App, ở trang **Overview** copy **Default domain**
-(dạng `fat-guide-api....azurewebsites.net`). Từ đây gọi nó là `<AZURE_URL>`.
+Cổng 22 (SSH) thường đã mở sẵn. Cổng 80 cần cho Caddy xin chứng chỉ, cổng 443 là HTTPS.
 
-### 1.2 Cho phép tải publish profile
+**Đặt tên miền.** Portal → VM → bấm vào **Public IP address** → **Configuration** → ô **DNS name label**, gõ ví
+dụ `fat-api` → **Save**. Bạn nhận được tên miền dạng `fat-api.southeastasia.cloudapp.azure.com`. Từ đây gọi
+nó là `<API_DOMAIN>`.
 
-Vào **Settings → Configuration → General settings**, bật **SCM Basic Auth Publishing Credentials** → **Save**.
-Không bật thì nút tải publish profile ở bước sau bị mờ.
+Nên đặt Public IP là **Static** (cùng trang Configuration) để IP không đổi khi VM khởi động lại.
 
-### 1.3 Nối GitHub Actions
+---
 
-1. Ở trang **Overview** của Web App, bấm **Download publish profile**. Bạn được một file `.PublishSettings`.
-2. Trên GitHub: repo → **Settings → Secrets and variables → Actions → New repository secret**:
-   - Name: `AZURE_WEBAPP_PUBLISH_PROFILE`
-   - Secret: dán **toàn bộ nội dung** file `.PublishSettings`.
-3. Mở `.github/workflows/deploy-api.yml`, sửa dòng `AZURE_WEBAPP_NAME: fat-guide-api` thành đúng tên Web App
-   của bạn, rồi commit và push.
+## 2. Cài Docker trên VM
 
-Mỗi lần push thay đổi trong `server/`, workflow tự chạy: chạy test, `dotnet publish`, rồi deploy lên Azure.
-Muốn chạy tay thì vào tab **Actions → Deploy API to Azure → Run workflow**.
+Trên máy bạn, trong thư mục dự án (thay `key.pem`, `azureuser` và IP cho đúng):
 
-### 1.4 Kiểm tra backend
-
-Mở `https://<AZURE_URL>/api/health`. Kết quả đúng:
-
-```json
-{"status":"ok","hexDumps":6}
+```bash
+cd ~/Downloads/FAT
+chmod 600 key.pem
+scp -i key.pem deploy/vm/setup.sh azureuser@<IP-của-VM>:
+ssh -i key.pem azureuser@<IP-của-VM> "bash setup.sh"
 ```
 
-Lần đầu có thể mất 20–30 giây vì app phải khởi động.
+Script cài Docker từ kho chính thức của Docker và tạo thư mục `/opt/fat-guide`. Xong thì thử lại:
+
+```bash
+ssh -i key.pem azureuser@<IP-của-VM> "docker compose version"
+```
+
+Phải in ra phiên bản (ví dụ `Docker Compose version v2…`). Nếu báo *permission denied* thì SSH lại một lần
+nữa: quyền dùng Docker chỉ có hiệu lực từ lần đăng nhập sau.
+
+Nên cất file `.pem` ở `~/.ssh/`, không để trong thư mục dự án. Nếu lỡ để thì nó cũng không bị commit, vì
+`.gitignore` đã loại mọi file `*.pem`.
 
 ---
 
-## 2. Frontend lên Vercel
+## 3. Frontend lên Vercel
 
-1. vercel.com → **Add New… → Project** → **Import** repo GitHub vừa tạo.
-2. **Root Directory**: bấm **Edit**, chọn **`client`**. Đây là bước hay bị quên nhất.
-3. Framework Preset tự nhận **Vite** (cấu hình nằm trong `client/vercel.json`).
-4. **Environment Variables**:
-   - Name: `VITE_API_BASE_URL`
-   - Value: `https://<AZURE_URL>` (không có `/` ở cuối, không có `/api`)
-5. Bấm **Deploy**. Xong thì copy domain chính, dạng `https://<project>.vercel.app`. Từ đây gọi nó là
-   `<VERCEL_URL>`.
+1. vercel.com → **Add New… → Project** → **Import** repo `FATExamPreparation`.
+2. **Root Directory**: bấm **Edit**, chọn **`client`**.
+3. **Environment Variables**: `VITE_API_BASE_URL` = `https://<API_DOMAIN>` (không có `/` cuối, không có `/api`).
+4. **Deploy**. Copy domain chính, dạng `https://<project>.vercel.app`. Từ đây gọi nó là `<VERCEL_URL>`.
 
-`VITE_API_BASE_URL` được gắn vào code **lúc build**. Sau này đổi giá trị thì phải vào **Deployments → … →
-Redeploy** thì mới có hiệu lực.
+Từ giờ mỗi lần push, Vercel tự deploy lại frontend.
 
 ---
 
-## 3. Mở CORS cho domain Vercel
+## 4. GitHub: khai báo cho workflow
 
-Lúc này mở `<VERCEL_URL>`, các hex dump sẽ báo **“Chưa tải được”**. Lý do: backend chưa cho phép domain
-Vercel gọi tới. Bước này sửa lỗi đó.
+Repo trên GitHub → **Settings → Secrets and variables → Actions**.
 
-Azure portal → Web App → **Settings → Environment variables → App settings → Add**:
+Tab **Secrets** → **New repository secret**:
 
 | Name | Value |
 | --- | --- |
-| `Cors__AllowedOrigins__0` | `https://<project>.vercel.app` |
+| `VM_SSH_KEY` | Toàn bộ nội dung file `.pem`, kể cả dòng `-----BEGIN …-----` và `-----END …-----` |
 
-Bấm **Apply → Confirm**, app sẽ tự khởi động lại. Tải lại trang Vercel: các hex dump hiện ra là xong.
+Tab **Variables** → **New repository variable**:
 
-- Tên biến có **2 dấu gạch dưới** (`__`). ASP.NET đọc nó thành `Cors:AllowedOrigins[0]` trong `appsettings.json`.
-- Giá trị phải **khớp chính xác**: có `https://`, không có `/` ở cuối.
-- Có thêm domain (domain riêng, link preview của Vercel) thì thêm `Cors__AllowedOrigins__1`, `__2`…
+| Name | Value |
+| --- | --- |
+| `VM_HOST` | IP hoặc `<API_DOMAIN>` của VM |
+| `VM_USER` | user SSH, thường là `azureuser` |
+| `API_DOMAIN` | `<API_DOMAIN>` |
+| `FRONTEND_ORIGIN` | `<VERCEL_URL>` (có `https://`, không có `/` cuối) |
+
+Lấy nội dung `.pem` để dán: `cat ~/.ssh/key.pem`, copy hết. Chỉ dán vào ô secret của GitHub, không gửi cho ai.
+
+---
+
+## 5. Chạy deploy lần đầu
+
+GitHub → tab **Actions** → **Deploy API to Azure VM** → **Run workflow**. Workflow gồm:
+
+1. **test**: chạy test và build backend.
+2. **deploy**: build image, đẩy lên GHCR, chép `deploy/vm/` lên VM, khởi động lại, rồi kiểm tra
+   `https://<API_DOMAIN>/api/health`.
+
+Thấy cả hai job xanh là xong. Mở `https://<API_DOMAIN>/api/health` phải thấy:
+
+```json
+{"status":"ok","hexDumps":5}
+```
+
+Rồi mở `<VERCEL_URL>`: các hex dump phải tải được. Từ đây, mỗi lần push thay đổi backend là tự deploy.
 
 ---
 
@@ -118,19 +120,18 @@ Bấm **Apply → Confirm**, app sẽ tự khởi động lại. Tải lại tra
 
 | Triệu chứng | Nguyên nhân | Cách sửa |
 | --- | --- | --- |
-| Hex dump báo “Chưa tải được (Failed to fetch)”; Console có chữ `CORS` | Chưa làm bước 3, hoặc domain gõ sai hay thừa `/` cuối | Sửa `Cors__AllowedOrigins__0` cho khớp chính xác domain Vercel |
-| Báo “Chưa tải được (HTTP 404)” | `VITE_API_BASE_URL` sai, ví dụ có thêm `/api` | Sửa biến trên Vercel rồi **Redeploy** |
-| Vercel build lỗi “Could not read package.json” | Root Directory chưa đặt là `client` | Project Settings → General → Root Directory = `client` |
-| Workflow lỗi ở bước `webapps-deploy` | Sai tên app hoặc thiếu secret publish profile | Kiểm tra `AZURE_WEBAPP_NAME` và secret `AZURE_WEBAPP_PUBLISH_PROFILE` |
-| Nút Download publish profile bị mờ | Chưa bật SCM Basic Auth | Làm lại bước 1.2 |
-| Lần đầu mở trang rất chậm, rồi lại chạy bình thường | Gói F1 cho app “ngủ” khi không ai dùng | Bình thường. Trang có nút **Thử lại**. Muốn hết hẳn thì lên gói B1 và bật **Always On** |
-| `/swagger` trên Azure ra 404 | Swagger chỉ bật ở môi trường Development | Cố ý như vậy; ở máy local vẫn mở `/swagger` được |
+| Job deploy báo `Repository variable … is not set` | Thiếu biến ở bước 4 | Thêm biến còn thiếu, chạy lại workflow |
+| Lỗi ở bước *Deploy to the VM*: `Permission denied (publickey)` | Sai `VM_USER` hoặc `VM_SSH_KEY` dán thiếu dòng | Dán lại đủ nội dung `.pem`; kiểm tra user bằng `ssh -i key.pem <user>@<IP>` |
+| `scp: /opt/fat-guide/...: No such file or directory` | Chưa chạy `setup.sh` (bước 2) | Làm bước 2 |
+| `docker: command not found` hoặc `permission denied … docker.sock` | Docker chưa cài, hoặc user chưa vào nhóm docker | Chạy lại bước 2, rồi SSH lại |
+| Bước *Check the public URL* lỗi | Cổng 80/443 chưa mở, hoặc DNS name label chưa đặt | Làm lại bước 1; xem `docker compose logs caddy` trên VM |
+| Trang Vercel báo “Chưa tải được”, Console có chữ `CORS` | `FRONTEND_ORIGIN` sai hoặc thừa `/` cuối | Sửa biến rồi chạy lại workflow |
+| Trang Vercel báo “Chưa tải được (HTTP 404)” | `VITE_API_BASE_URL` sai, ví dụ có thêm `/api` | Sửa biến trên Vercel rồi **Redeploy** |
+| Link preview của Vercel không tải được API | CORS chỉ cho phép domain chính | Bình thường; dùng domain chính |
 
----
+Xem log trên VM:
 
-## Cách khác: chạy backend bằng Docker trên Azure
-
-`server/Dockerfile` vẫn dùng được nếu bạn muốn chạy bằng container (ví dụ Azure Container Apps).
-Cách này cần Azure Container Registry để chứa image, và registry **tính phí theo tháng**, khác với gói F1 ở
-trên. Image lắng nghe ở cổng **8080**, nên khi cấu hình ingress hay target port thì đặt là `8080`. Biến
-`Cors__AllowedOrigins__0` đặt giống bước 3.
+```bash
+ssh -i key.pem azureuser@<IP-của-VM>
+cd /opt/fat-guide && docker compose ps && docker compose logs --tail=50
+```

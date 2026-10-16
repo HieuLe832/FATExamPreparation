@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FatGuide.Api.Controllers;
 
-/// <summary>Liveness check for Azure App Service and for checking a fresh deploy.</summary>
+/// <summary>Liveness check used by deploy/vm/deploy.sh and the deploy workflow after each release.</summary>
 [ApiController]
 [Route("api/health")]
 [Produces("application/json")]
