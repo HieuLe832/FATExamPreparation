@@ -327,3 +327,18 @@ dl.glossary dd { margin: 2px 0 0; font-size: 0.94rem; }
 .dump-head h4 { margin: 0; font-family: var(--font-mono); font-size: 0.78rem; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; }
 .info .hint { color: var(--muted); font-size: 0.9rem; }
 .substep-body .dump { max-width: 100%; }
+
+/* ---------- band colours: split a range into parts (e.g. the 4 partition rows) ---------- */
+.hex .b.band-1, .band-chip.band-1 { background: var(--f-name); }
+.hex .b.band-2, .band-chip.band-2 { background: var(--f-clus); }
+.hex .b.band-3, .band-chip.band-3 { background: var(--f-attr); }
+.hex .b.band-4, .band-chip.band-4 { background: var(--f-size); }
+.hex .b[class*="band-"] { color: var(--ink); opacity: 1; }
+.hex .b.band-1 + .b.band-2, .hex .b.band-2 + .b.band-3, .hex .b.band-3 + .b.band-4 { box-shadow: inset 2px 0 0 var(--ink); }
+.band-chip { display: inline-block; padding: 1px 8px; border-radius: 6px; font-weight: 600; white-space: nowrap; }
+.split-bytes { font-family: var(--font-mono); font-size: 0.82rem; white-space: nowrap; }
+.rowsplit { display: flex; gap: 4px; min-width: 620px; font-size: 0.8rem; }
+.rs-cell { display: grid; gap: 2px; padding: 8px 10px; border-radius: 8px; background: var(--f-name); min-width: 104px; align-content: start; }
+.rs-cell.skip { background: var(--surface-2); color: var(--muted); }
+.rs-cell b { font-size: 0.86rem; }
+.rs-off { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); white-space: nowrap; }

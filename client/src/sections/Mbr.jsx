@@ -1,7 +1,59 @@
+import { useEffect, useState } from "react";
 import HexDump from "../components/HexDump.jsx";
 import { Answer, Check, Goal, SectionHead, SubStep, SubSteps, Table } from "../components/Study.jsx";
+import { fetchHexDump } from "../api/hexDumps.js";
+import { parseHex } from "../fat/dumps.js";
+import { h2 } from "../fat/annotate.js";
 
 const n = { cls: "n" };
+const TABLE_START = 0x1be;
+const PARTITION_ROWS = [0, 1, 2, 3].map((p) => [TABLE_START + p * 16, 16]);
+const hex3 = (v) => v.toString(16).toUpperCase();
+
+/** The 64-byte partition table split into its 4 rows of 16 bytes, with the real bytes of each row. */
+function PartitionSplit() {
+  const [dump, setDump] = useState(null);
+  useEffect(() => { let alive = true; fetchHexDump("mbr").then((d) => alive && setDump(d)).catch(() => {}); return () => { alive = false; }; }, []);
+  const bytes = dump && parseHex(dump.hex);
+  return (
+    <Table
+      head={["Dòng", "Byte", "16 byte của dòng"]}
+      rows={PARTITION_ROWS.map(([o], p) => [
+        <span className={`band-chip band-${p + 1}`}>Phân vùng {p + 1}</span>,
+        <span className="mono">{hex3(o)} – {hex3(o + 15)}</span>,
+        <span className="split-bytes">
+          {bytes ? Array.from({ length: 16 }, (_, k) => h2(bytes[o - dump.base + k])).join(" ") : "…"}
+        </span>,
+      ])}
+    />
+  );
+}
+
+// The 6 boxes inside one 16-byte partition row: [offset in row, length, label, meaning, skip?]
+const ROW_FIELDS = [
+  [0, 1, "+0", "khởi động"], [1, 3, "+1", "bỏ qua", true], [4, 1, "+4", "loại"],
+  [5, 3, "+5", "bỏ qua", true], [8, 4, "+8", "sector đầu"], [12, 4, "+C", "số sector"],
+];
+
+/** Row 1 of the partition table cut into its 6 boxes, with the real bytes. */
+function RowSplit() {
+  const [dump, setDump] = useState(null);
+  useEffect(() => { let alive = true; fetchHexDump("mbr").then((d) => alive && setDump(d)).catch(() => {}); return () => { alive = false; }; }, []);
+  const bytes = dump && parseHex(dump.hex);
+  return (
+    <div className="tablewrap">
+      <div className="rowsplit" role="img" aria-label="Một dòng phân vùng 16 byte chia thành 6 ô: +0 khởi động, +1 bỏ qua, +4 loại, +5 bỏ qua, +8 sector đầu, +C số sector">
+        {ROW_FIELDS.map(([o, len, label, meaning, skip]) => (
+          <div key={label} className={"rs-cell" + (skip ? " skip" : "")} style={{ flex: len + 1 }}>
+            <span className="rs-off">{label} · {len} byte</span>
+            <b className="mono">{bytes ? Array.from({ length: len }, (_, k) => h2(bytes[TABLE_START - dump.base + o + k])).join(" ") : "…"}</b>
+            <span>{meaning}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function Mbr() {
   return (
@@ -21,11 +73,18 @@ export default function Mbr() {
           <p>446 byte đầu là mã khởi động, nên bảng phân vùng bắt đầu ở byte 446. Đổi ra hex: 446 = <b>1BE</b>.</p>
           <Check q="Kiểm tra: 3 phần cộng lại bằng bao nhiêu?">446 + 64 + 2 = 512 byte, đúng bằng 1 sector</Check>
         </SubStep>
-        <SubStep title="Tìm 4 dòng phân vùng">
-          <p>Bảng có 4 dòng, mỗi dòng 16 byte. 16 viết hex là <code>10</code>, nên mỗi dòng sau cộng thêm <code>10</code>: <code>1BE</code> → <code>1CE</code> → <code>1DE</code> → <code>1EE</code>.</p>
-          <p>Trên hex dump, <code>1BE</code> = dòng <code>1B0</code>, cột <code>E</code>, nên mỗi dòng phân vùng bắt đầu ở cuối một dòng hex. Dòng toàn <code>00</code> = không có phân vùng.</p>
-          <HexDump id="mbr" focus={[[0x1be, 64]]} />
+        <SubStep title="Chia 64 byte thành 4 dòng">
+          <p>64 byte ÷ 4 phân vùng = <b>16 byte</b> mỗi dòng. 16 viết hex là <code>10</code>, nên dòng sau = dòng trước + <code>10</code>:</p>
+          <PartitionSplit />
+          <p>Trên hex dump, mỗi dòng phân vùng bắt đầu ở cột <code>E</code> và tràn sang dòng hex kế tiếp (cùng màu với bảng trên). Dòng toàn <code>00</code> = không có phân vùng.</p>
+          <HexDump id="mbr" focus={[[TABLE_START, 64]]} bands={PARTITION_ROWS} />
           <Check q="Đề mini có mấy phân vùng?">2 (dòng 1DE và 1EE toàn 00)</Check>
+        </SubStep>
+        <SubStep title="Chia 1 dòng thành 6 ô">
+          <p>Mỗi dòng 16 byte lại chia thành 6 ô. Đây là dòng của phân vùng 1:</p>
+          <RowSplit />
+          <p>Hai ô “bỏ qua” là địa chỉ kiểu cũ (CHS), đề không hỏi. Chỉ cần 4 ô: <code>+0</code>, <code>+4</code>, <code>+8</code>, <code>+C</code>.</p>
+          <Check q="Ô nào cho biết loại phân vùng?">Ô +4 (byte thứ 5 của dòng)</Check>
         </SubStep>
         <SubStep title="Khởi động và loại">
           <Table head={["Byte", "Nghĩa"]} rows={[

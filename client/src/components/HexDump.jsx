@@ -9,8 +9,9 @@ const COLS = Array.from({ length: 16 }, (_, c) => c);
  * Loads one dump of the mini disk from the backend, then renders it.
  * `focus`: [[offset, length], …] absolute byte ranges this step talks about; everything else is dimmed.
  * `from` / `to`: absolute offsets of the first and last row to show (default: the whole dump).
+ * `bands`: [[offset, length], …] ranges painted in band colours 1, 2, 3… (overrides the field colours).
  */
-export default function HexDump({ id, focus, from, to }) {
+export default function HexDump({ id, focus, from, to, bands }) {
   const [state, setState] = useState({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -22,7 +23,7 @@ export default function HexDump({ id, focus, from, to }) {
     return () => { alive = false; };
   }, [id, attempt]);
 
-  if (state.status === "ready") return <HexDumpView d={state.dump} focus={focus} from={from} to={to} />;
+  if (state.status === "ready") return <HexDumpView d={state.dump} focus={focus} from={from} to={to} bands={bands} />;
   return (
     <div className="dump">
       <div className="info" role={state.status === "error" ? "alert" : "status"}>
@@ -45,7 +46,7 @@ export default function HexDump({ id, focus, from, to }) {
 }
 
 /** Clickable hex dump: each byte belongs to a field segment; selecting one explains it. */
-function HexDumpView({ d, focus, from, to }) {
+function HexDumpView({ d, focus, from, to, bands }) {
   const { bytes, segs, owner } = useMemo(() => {
     const bytes = parseHex(d.hex);
     const segs = annotate(d.kind, bytes, d.base);
@@ -60,10 +61,11 @@ function HexDumpView({ d, focus, from, to }) {
   const lastRow = to === undefined ? bytes.length / 16 - 1 : (to - d.base) / 16;
   const rows = Array.from({ length: lastRow - firstRow + 1 }, (_, i) => firstRow + i);
   const inFocus = (i) => !focus || focus.some(([o, n]) => d.base + i >= o && d.base + i < o + n);
+  const band = (i) => (bands ?? []).findIndex(([o, n]) => d.base + i >= o && d.base + i < o + n) + 1;
 
   const cellClass = (i, c) => {
     const s = segs[owner[i]];
-    let cls = "b " + s.cls + (c === 8 ? " gap" : "") + (inFocus(i) ? "" : " dim");
+    let cls = "b " + s.cls + (c === 8 ? " gap" : "") + (inFocus(i) ? "" : " dim") + (band(i) ? ` band-${band(i)}` : "");
     if (owner[i] === sel) {
       cls += " sel";
       if (i === s.start || c === 0) cls += " sel-l";
