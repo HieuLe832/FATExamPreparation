@@ -38,6 +38,14 @@ cd client && npm run build        # outputs to server/wwwroot
 dotnet run --project server       # http://localhost:5080 (builds the client first if wwwroot is empty)
 ```
 
+Backend in Docker (the image does not build the frontend; it serves whatever is in `server/wwwroot`):
+
+```bash
+cd client && npm run build                     # only if you want the page served by the container
+docker build -t fat-guide-backend server
+docker run --rm -p 8080:8080 fat-guide-backend # http://localhost:8080
+```
+
 Regenerate slide crops:
 
 ```bash
@@ -64,6 +72,11 @@ python3 scripts/crop_slides.py /tmp/slides client/public/slides
   formula means updating both the prose answers and the tests.
 - **`calc` and `ent` strings from `annotate.js` render as HTML.** Any text that comes from dump bytes
   must go through `esc()`.
+- **Don't put `Urls` in `appsettings.json`.** It overrides `ASPNETCORE_URLS`/`HTTP_PORTS`, so the container
+  binds to `localhost` and can't be reached. The local port (5080) lives in
+  `server/Properties/launchSettings.json`, which only `dotnet run` reads.
+- **The Docker build passes `-p:SkipClientBuild=true`.** The SDK image has no npm, so without it the
+  csproj's `BuildClient` target fails whenever `wwwroot/index.html` is missing.
 - **`pkill -f <name>` can match the shell running it** and kill your own command. Stop the dev server by
   PID or with Ctrl+C instead.
 - **Headless Firefox hangs in this environment.** To check rendering without a browser, server-render with
