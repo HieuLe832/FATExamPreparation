@@ -3,7 +3,11 @@ using FatGuide.Api.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 const string FrontendCorsPolicy = "Frontend";
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+// Browsers send Origin without a trailing slash, so "https://x.vercel.app/" in config would never match.
+var allowedOrigins = (builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [])
+    .Select(origin => origin.Trim().TrimEnd('/'))
+    .Where(origin => origin.Length > 0)
+    .ToArray();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

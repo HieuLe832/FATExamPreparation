@@ -135,8 +135,9 @@ never in the repo.
   `import.meta.env`, not into `process.env` of the config, so a plain `process.env` read ignores `.env.local`.
 - **`VITE_API_BASE_URL` is baked in at build time.** Changing it on Vercel needs a redeploy. Use the origin
   only (`https://x.azurewebsites.net`), no `/api`; a trailing slash is stripped in `api/hexDumps.js`.
-- **CORS origins must match exactly** (scheme, host, no trailing slash). On the VM the single allowed origin
-  is the `FRONTEND_ORIGIN` repo secret; Vercel preview URLs differ from production and are blocked.
+- **CORS origins must match exactly** (scheme and host). `Program.cs` strips a trailing `/` from configured
+  origins, because the first deploy failed with `FRONTEND_ORIGIN` set to `https://….vercel.app/` and secrets
+  can't be viewed to spot that. On the VM the single allowed origin is the `FRONTEND_ORIGIN` repo secret; Vercel preview URLs differ from production and are blocked.
 - **The API must be served over HTTPS.** The Vercel page is `https://`, and browsers block calls to a plain
   `http://IP` (mixed content). That's why Caddy sits in front with a domain (Azure Public IP "DNS name
   label" → `*.cloudapp.azure.com`) and needs NSG inbound 80 and 443 open.
