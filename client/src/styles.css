@@ -342,3 +342,30 @@ dl.glossary dd { margin: 2px 0 0; font-size: 0.94rem; }
 .rs-cell.skip { background: var(--surface-2); color: var(--muted); }
 .rs-cell b { font-size: 0.86rem; }
 .rs-off { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
+
+/* ---------- concept pages (Kiến thức nền) ---------- */
+.prereq { margin: 0; font-size: 0.88rem; color: var(--muted); }
+.hex .b.band-4 + .b.band-1 { box-shadow: inset 2px 0 0 var(--ink); }
+.dm-cell.rsv { background: var(--surface-2); }
+.dm-cell.next { background: var(--f-clus); }
+.dm-cell.next .dm-next { color: var(--ok); }
+.dm-cell.eof { background: var(--f-eof); }
+.dm-cell.free { background: transparent; border: 1px dashed var(--line); }
+.dirpair { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 12px; align-items: center; max-width: 760px; }
+.dirpair .toc { max-width: none; }
+.toc-title { font-family: var(--font-body); font-weight: 600; font-size: 0.85rem; padding: 4px 0 6px; border-bottom: 1px solid var(--line) !important; display: block !important; }
+.dirpair-arrow { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); text-align: center; max-width: 130px; }
+.bits { display: flex; gap: 4px; min-width: 520px; font-family: var(--font-mono); }
+.bit { flex: 1; display: grid; gap: 2px; text-align: center; padding: 8px 4px; border-radius: 8px; background: var(--f-attr); font-size: 0.75rem; }
+.bit.off { background: var(--surface-2); color: var(--muted); }
+.bit b { font-size: 1rem; }
+.roadmap-groups { display: grid; gap: 18px; }
+.roadmap-group { display: grid; gap: 8px; }
+.roadmap-group .outline-label { margin: 0; }
+.roadmap-group .roadmap { grid-auto-flow: row; grid-template-rows: none; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+@media (max-width: 900px) {
+  .dirpair { grid-template-columns: minmax(0, 1fr); }
+  .dirpair-arrow { max-width: none; }
+}
+.rowsplit.dense { min-width: 700px; }
+.rowsplit.dense .rs-cell { min-width: 84px; padding: 8px 7px; }

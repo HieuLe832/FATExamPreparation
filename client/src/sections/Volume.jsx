@@ -1,5 +1,5 @@
 import HexDump from "../components/HexDump.jsx";
-import { Answer, Check, Goal, SectionHead, SubStep, SubSteps, Table } from "../components/Study.jsx";
+import { Answer, Check, Goal, Prereq, SectionHead, SubStep, SubSteps, Table } from "../components/Study.jsx";
 
 const mono = (s) => <span className="mono">{s}</span>;
 const n = (label) => ({ label, cls: "n" });
@@ -9,6 +9,7 @@ export function Boot() {
     <section id="boot">
       <SectionHead tag="Đề mini · phần 2a" title="Boot sector" />
       <Goal>Đọc 10 thông số của volume.</Goal>
+      <Prereq links={[["volume", "Bên trong volume FAT32"], ["boot-sector", "Boot sector"]]} />
       <SubSteps>
         <SubStep title="Đọc các thông số">
           <Table head={["Byte", "Nghĩa"]} rows={[
@@ -72,6 +73,7 @@ export function Fat() {
     <section id="fat">
       <SectionHead tag="Đề mini · phần 2b (1)" title="Bảng FAT" />
       <Goal>Tìm tất cả cluster của một file.</Goal>
+      <Prereq links={[["bang-fat", "Bảng FAT"]]} />
       <SubSteps>
         <SubStep title="Ô số k nằm ở đâu">
           <p>Mỗi ô dài 4 byte, nên ô số k nằm ở byte <b>4 × k</b> của bảng.</p>
@@ -111,6 +113,7 @@ export function Directories() {
     <section id="dir">
       <SectionHead tag="Đề mini · phần 2b (2)" title="Thư mục và cây" />
       <Goal>Vẽ cây thư mục, ghi cluster và sector của từng file.</Goal>
+      <Prereq links={[["thu-muc", "Thư mục: RDET, SDET"], ["entry", "Một entry 32 byte"]]} />
       <SubSteps>
         <SubStep title="Chia thành từng entry">
           <p>Mỗi file chiếm 1 entry = 32 byte = <b>2 dòng</b>. Byte đầu <code>00</code> = hết bảng, <code>E5</code> = đã xóa (bỏ qua).</p>

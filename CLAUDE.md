@@ -7,7 +7,14 @@ One web app with one job: teach the user just enough FAT to solve `Baitap_HTTT.p
 exercise (bài 1: MBR partitions; bài 2a–e: a FAT32 volume read from hex dumps).
 
 **Audience: students who are "mất gốc"** (weak on the basics). Assume they don't know hex, bytes,
-little-endian, or what a sector is. "FAT là gì?", "Byte và hex" and the glossary exist for them.
+little-endian, or what a sector is.
+
+**Foundations come first ("Kiến thức nền", `sections/Concepts.jsx` plus `WhatIsFat`/`HexBasics`).** The user
+said the basics were too thin: learners must know what MBR, a partition, the volume regions, the boot
+sector, the FAT, RDET/SDET and an entry are before the exercise. Each gets one concept page answering
+*what it is*, *what it's for* and *what it looks like* (a diagram plus how it appears in hex), without the
+byte-by-byte decoding the lessons do. Concept pages use generic examples (README.TXT, PHOTOS, file A/B) so
+they don't give away mini-exercise answers. Each mini lesson starts with `<Prereq>` links back to them.
 
 **Teaching approach: divide and conquer on a mini exercise.** Don't copy Baitap_HTTT into the lessons.
 The lessons solve a small made-up disk (`server/Data/hex-dumps.json`) with the same question types and
@@ -43,7 +50,7 @@ no copied hex dumps. Explain FAT with analogies: directory = mục lục, FAT = 
 | `client/src/fat/annotate.js` | Pure decoders: MBR, boot sector, FAT32 elements, directory entries |
 | `client/src/fat/annotate.test.js` | Pins the dumps to the answers shown on the page |
 | `client/src/components/` | `HexDump` (clickable dump), `Calculators`, shared `Study` blocks |
-| `client/src/sections/` | Lessons: `WhatIsFat`, `Intro` (start, byte/hex), `MiniExercise`, `Mbr`, `Volume`, `Operations`, `RealExercise`, `Reference`, `Glossary` |
+| `client/src/sections/` | `Intro` (start, byte/hex), `WhatIsFat`, `Concepts` (6 concept pages), `MiniExercise`, `Mbr`, `Volume`, `Operations`, `RealExercise`, `Reference`, `Glossary` |
 | `client/vercel.json` | Vercel build settings |
 | `docs/DEPLOY.md` | Deploy guide for the user (Azure + Vercel) |
 

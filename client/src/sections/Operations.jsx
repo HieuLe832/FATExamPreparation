@@ -1,10 +1,11 @@
-import { Answer, Goal, ImpactTable, KeyPoints, SectionHead, SubStep, SubSteps, Table } from "../components/Study.jsx";
+import { Answer, Goal, ImpactTable, KeyPoints, Prereq, SectionHead, SubStep, SubSteps, Table } from "../components/Study.jsx";
 
 export default function Operations() {
   return (
     <section id="ops">
       <SectionHead tag="Đề mini · phần 2c, 2d, 2e" title="Move, Xóa, Copy" />
       <Goal>Biết mỗi lệnh sửa sector nào.</Goal>
+      <Prereq links={[["bang-fat", "Bảng FAT"], ["entry", "Một entry 32 byte"]]} />
       <KeyPoints title="Mỗi lệnh sửa gì">
         <Table
           head={["Lệnh", "Bảng FAT", "Thư mục", "Data"]}

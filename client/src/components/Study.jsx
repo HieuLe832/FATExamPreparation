@@ -1,5 +1,14 @@
 // Small building blocks shared by every lesson.
 
+/** Links back to the concept pages a lesson relies on. */
+export function Prereq({ links }) {
+  return (
+    <p className="prereq">
+      Ôn lại: {links.map(([id, text], i) => <span key={id}>{i > 0 && " · "}<a href={`#${id}`}>{text}</a></span>)}
+    </p>
+  );
+}
+
 /** One line: what the learner can do after this lesson. */
 export function Goal({ children }) {
   return <p className="goal"><span>Mục tiêu</span>{children}</p>;
@@ -103,11 +112,12 @@ export function ImpactTable({ fat, rdet, sdet, data }) {
   );
 }
 
-/** Clusters of the mini disk as a strip of boxes, coloured by owner, with each box's FAT value under it. */
-export function DiskMap({ cells }) {
+/** A strip of boxes (clusters or FAT cells): small number on top, label, and a value under it. */
+export function DiskMap({ cells, label = "Bản đồ cluster của đĩa mini" }) {
+  const style = { gridTemplateColumns: `repeat(${cells.length}, minmax(64px, 1fr))`, minWidth: cells.length * 68 };
   return (
     <div className="tablewrap">
-      <div className="diskmap" role="img" aria-label="Bản đồ cluster của đĩa mini">
+      <div className="diskmap" role="img" aria-label={label} style={style}>
         {cells.map((c) => (
           <div key={c.k} className={"dm-cell " + (c.cls ?? "")}>
             <span className="dm-k">{c.k}</span>

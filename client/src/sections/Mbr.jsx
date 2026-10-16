@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import HexDump from "../components/HexDump.jsx";
-import { Answer, Check, Goal, SectionHead, SubStep, SubSteps, Table } from "../components/Study.jsx";
+import { Answer, Check, Goal, Prereq, SectionHead, SubStep, SubSteps, Table } from "../components/Study.jsx";
 import { fetchHexDump } from "../api/hexDumps.js";
 import { parseHex } from "../fat/dumps.js";
 import { h2 } from "../fat/annotate.js";
@@ -60,6 +60,7 @@ export default function Mbr() {
     <section id="mbr">
       <SectionHead tag="Đề mini · phần 1" title="MBR và phân vùng" />
       <Goal>Ổ có mấy phân vùng, loại gì, dung lượng bao nhiêu, phân vùng nào khởi động.</Goal>
+      <Prereq links={[["o-cung", "Ổ cứng, MBR, phân vùng"]]} />
       <SubSteps>
         <SubStep title="MBR gồm 3 phần">
           <p>MBR là sector 0 của ổ cứng, dài 512 byte, luôn chia như sau:</p>

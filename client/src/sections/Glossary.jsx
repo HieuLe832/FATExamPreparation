@@ -8,6 +8,8 @@ const TERMS = [
   ["Sector", "1 ô 512 byte trên đĩa."],
   ["Cluster", "Vài sector liền nhau (đề mini: 2, đề thật: 4). Đánh số từ 2."],
   ["Phân vùng", "Một phần của ổ cứng, như ổ C, ổ D."],
+  ["Volume", "Một phân vùng đã định dạng, ví dụ một volume FAT32."],
+  ["Active", "Phân vùng dùng để khởi động máy."],
   ["MBR", "Sector 0 của ổ cứng, chứa bảng 4 phân vùng."],
   ["Boot sector", "Sector 0 của phân vùng, chứa các thông số."],
   ["Bảng FAT", "Linked list ghi “sau cluster này là cluster nào”. Có 2 bản."],
@@ -18,6 +20,7 @@ const TERMS = [
   ["Entry", "1 dòng 32 byte trong thư mục, mô tả 1 file."],
   ["Tên dài (LFN)", "Entry có byte 0B = 0F, chứa một mảnh tên."],
   ["E5", "Byte đầu entry là E5 = file đã xóa."],
+  ["Thuộc tính", "Byte 0B của entry; mỗi bit là một cờ: A, D, V, S, H, R."],
 ];
 
 export default function Glossary() {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Hero, HexBasics } from "./sections/Intro.jsx";
 import WhatIsFat from "./sections/WhatIsFat.jsx";
+import { BootConcept, DirConcept, DiskConcept, EntryConcept, FatConcept, VolumeConcept } from "./sections/Concepts.jsx";
 import MiniExercise from "./sections/MiniExercise.jsx";
 import Glossary from "./sections/Glossary.jsx";
 import Mbr from "./sections/Mbr.jsx";
@@ -13,8 +14,16 @@ import { CheatSheet, Pitfalls } from "./sections/Reference.jsx";
 const GROUPS = [
   { name: "Khởi động", steps: [
     { id: "pham-vi", label: "Bắt đầu", Page: Hero },
+  ] },
+  { name: "Kiến thức nền", steps: [
     { id: "fat-la-gi", label: "FAT là gì?", Page: WhatIsFat },
     { id: "hex", label: "Byte và hex", Page: HexBasics },
+    { id: "o-cung", label: "Ổ cứng, MBR, phân vùng", Page: DiskConcept },
+    { id: "volume", label: "Bên trong volume FAT32", Page: VolumeConcept },
+    { id: "boot-sector", label: "Boot sector", Page: BootConcept },
+    { id: "bang-fat", label: "Bảng FAT", Page: FatConcept },
+    { id: "thu-muc", label: "Thư mục: RDET, SDET", Page: DirConcept },
+    { id: "entry", label: "Một entry 32 byte", Page: EntryConcept },
   ] },
   { name: "Đề mini", steps: [
     { id: "de-mini", label: "Đề mini hỏi gì", Page: MiniExercise },
@@ -142,7 +151,7 @@ export default function App() {
           <p className="crumb">
             {lessonNo > 0 ? <>Bước {lessonNo} / {LESSONS.length}</> : "Tra cứu"} · {step.group}
           </p>
-          <Page lessons={LESSONS} done={done} />
+          <Page lessons={LESSONS} done={done} groups={GROUPS} />
           <Pager step={step} onDone={() => markDone(step.id)} />
         </main>
       </div>

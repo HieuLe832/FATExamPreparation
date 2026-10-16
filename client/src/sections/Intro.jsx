@@ -1,7 +1,9 @@
 import Calculators from "../components/Calculators.jsx";
 import { Check, Goal, SectionHead, SubStep, SubSteps } from "../components/Study.jsx";
 
-export function Hero({ lessons = [], done = new Set() }) {
+export function Hero({ groups = [], done = new Set() }) {
+  let n = 0;
+  const shown = groups.filter((g) => g.name !== "Khởi động" && g.name !== "Tra cứu");
   return (
     <header className="hero" id="pham-vi">
       <div className="hero-strip" aria-hidden="true">
@@ -10,19 +12,29 @@ export function Hero({ lessons = [], done = new Set() }) {
       </div>
       <h1>FAT vừa đủ làm bài</h1>
       <p className="lead">
-        Ta giải một <b>đề mini</b> giống Baitap_HTTT nhưng nhỏ hơn, chia thành từng bước nhỏ. Làm xong đề mini là làm
-        được đề thật.
+        Đọc <b>kiến thức nền</b> để biết từng phần của ổ đĩa là gì. Sau đó giải một <b>đề mini</b> giống Baitap_HTTT,
+        chia thành từng bước nhỏ. Làm xong đề mini là làm được đề thật.
       </p>
-      <ol className="roadmap" aria-label="Lộ trình học">
-        {lessons.slice(1).map((s, i) => (
-          <li key={s.id} className={done.has(s.id) ? "done" : undefined}>
-            <a href={`#${s.id}`}>
-              <span className="roadmap-no">{done.has(s.id) ? "✓" : i + 1}</span>
-              <span className="roadmap-text"><small>{s.group}</small>{s.label}</span>
-            </a>
-          </li>
+      <div className="roadmap-groups">
+        {shown.map((g) => (
+          <div className="roadmap-group" key={g.name}>
+            <p className="outline-label">{g.name}</p>
+            <ol className="roadmap" aria-label={g.name}>
+              {g.steps.map((s) => {
+                n += 1;
+                return (
+                  <li key={s.id} className={done.has(s.id) ? "done" : undefined}>
+                    <a href={`#${s.id}`}>
+                      <span className="roadmap-no">{done.has(s.id) ? "✓" : n}</span>
+                      <span className="roadmap-text">{s.label}</span>
+                    </a>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
         ))}
-      </ol>
+      </div>
     </header>
   );
 }

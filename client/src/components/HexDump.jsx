@@ -9,7 +9,7 @@ const COLS = Array.from({ length: 16 }, (_, c) => c);
  * Loads one dump of the mini disk from the backend, then renders it.
  * `focus`: [[offset, length], …] absolute byte ranges this step talks about; everything else is dimmed.
  * `from` / `to`: absolute offsets of the first and last row to show (default: the whole dump).
- * `bands`: [[offset, length], …] ranges painted in band colours 1, 2, 3… (overrides the field colours).
+ * `bands`: [[offset, length], …] ranges painted in 4 cycling band colours (overrides the field colours).
  */
 export default function HexDump({ id, focus, from, to, bands }) {
   const [state, setState] = useState({ status: "loading" });
@@ -65,7 +65,7 @@ function HexDumpView({ d, focus, from, to, bands }) {
 
   const cellClass = (i, c) => {
     const s = segs[owner[i]];
-    let cls = "b " + s.cls + (c === 8 ? " gap" : "") + (inFocus(i) ? "" : " dim") + (band(i) ? ` band-${band(i)}` : "");
+    let cls = "b " + s.cls + (c === 8 ? " gap" : "") + (inFocus(i) ? "" : " dim") + (band(i) ? ` band-${((band(i) - 1) % 4) + 1}` : "");
     if (owner[i] === sel) {
       cls += " sel";
       if (i === s.start || c === 0) cls += " sel-l";
