@@ -20,6 +20,16 @@ Làm theo thứ tự dưới đây. Mỗi bước chỉ làm **một lần**.
 
 ## 1. Azure: mở cổng và đặt tên miền cho VM
 
+**Gắn Public IP (nếu chưa có).** Ở trang Overview của VM, nếu **Public IP address** là `-` thì VM chưa có IP
+công khai: không SSH được, GitHub Actions cũng không vào được. Cách gắn:
+
+1. VM → **Networking → Network settings** → bấm vào tên **Network interface** (dạng `fat123_z1`).
+2. Trong trang network interface: **Settings → IP configurations** → bấm `ipconfig1`.
+3. Tick **Associate public IP address** → **Create a public IP address** → Name `FAT-ip`, Assignment
+   **Static** → **OK** → **Save**.
+
+Public IP có tính một khoản phí nhỏ mỗi tháng, trừ vào credit của Azure for Students.
+
 **Mở cổng 80 và 443.** Portal → VM → **Networking** (Network settings) → **Add inbound port rule**:
 
 | Ô | Giá trị |
