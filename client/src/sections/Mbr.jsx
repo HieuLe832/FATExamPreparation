@@ -1,5 +1,5 @@
 import HexDump from "../components/HexDump.jsx";
-import { Answer, Example, SectionHead, Slide, Table, Try } from "../components/Study.jsx";
+import { Answer, Example, SectionHead, Slide, SlideStrip, Table, Try } from "../components/Study.jsx";
 
 const n = { cls: "n" };
 
@@ -7,12 +7,12 @@ export default function Mbr() {
   return (
     <section id="mbr">
       <SectionHead tag="Bài tập 1" title="MBR và bảng phân vùng" />
-      <div className="slides-row">
+      <SlideStrip>
         <Slide n={38} caption="tổ chức hệ thống tập tin trên đĩa"
           alt="Trích slide: MBR ở sector logic 0, 512 byte; phân vùng primary và extended, tối đa 4 phân vùng" />
         <Slide n={39} caption="Master Boot Record"
           alt="Trích slide: cấu trúc Master Boot Record, bảng phân vùng tại 1BE, chữ ký 55AA, các TYPE-ID" />
-      </div>
+      </SlideStrip>
       <div className="prose">
         <p>
           Bảng phân vùng nằm tại offset <code>1BE</code>, gồm 4 entry, mỗi entry 16 byte: <code>1BE</code>,{" "}
@@ -22,7 +22,7 @@ export default function Mbr() {
       </div>
       <Table
         wrapStyle={{ maxWidth: 720 }}
-        head={["Offset trong entry", { label: "Số byte", cls: "n" }, "Ý nghĩa"]}
+        head={["Vị trí", { label: "Byte", cls: "n" }, "Ý nghĩa"]}
         rows={[
           [<span className="mono">+0</span>, 1, <><b>Trạng thái</b>: <code>80</code> = active (phân vùng khởi động), <code>00</code> = không</>],
           [<span className="mono">+1</span>, 3, "Địa chỉ CHS bắt đầu (bỏ qua)"],

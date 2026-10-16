@@ -1,5 +1,5 @@
 import HexDump from "../components/HexDump.jsx";
-import { Answer, Example, SectionHead, Slide, Table, Try } from "../components/Study.jsx";
+import { Answer, Example, SectionHead, Slide, SlideStrip, Table, Try } from "../components/Study.jsx";
 
 const mono = (s) => <span className="mono">{s}</span>;
 const n = (label) => ({ label, cls: "n" });
@@ -88,12 +88,12 @@ export function Fat() {
   return (
     <section id="fat">
       <SectionHead tag="Bài tập 2b · phần 1" title="Bảng FAT: chuỗi cluster" />
-      <div className="slides-row">
+      <SlideStrip>
         <Slide n={53} caption="Bảng FAT (1/2)"
           alt="Trích slide: bảng FAT lưu vị trí tập tin theo kiểu danh sách liên kết; FAT32 mỗi phần tử 4 byte" />
         <Slide n={54} caption="Bảng FAT (2/2)" alt="Trích slide: giá trị phần tử FAT: 0 trống, 0FFFFFF7 hư, 0FFFFFFF EOF" />
-      </div>
-      <Slide n={55} caption="truy xuất phần tử FAT" alt="Trích slide: đọc phần tử FAT32 theo nhóm 4 byte, đảo thứ tự byte" />
+        <Slide n={55} caption="truy xuất phần tử FAT" alt="Trích slide: đọc phần tử FAT32 theo nhóm 4 byte, đảo thứ tự byte" />
+      </SlideStrip>
       <div className="prose">
         <p>
           Sector 38 là sector đầu của FAT1, nên byte đầu dump chính là phần tử 0. FAT32 dùng 4 byte cho mỗi phần tử: phần
@@ -155,18 +155,16 @@ export function Directories() {
   return (
     <section id="dir">
       <SectionHead tag="Bài tập 2b · phần 2" title="RDET, SDET và cây thư mục" />
-      <Slide n={49} caption="bảng thư mục gốc (RDET)"
-        alt="Trích slide: RDET gồm các entry 32 byte; byte đầu 0 là trống, E5 là đã xóa; entry chính và entry phụ" />
-      <div className="slides-row">
+      <SlideStrip>
+        <Slide n={49} caption="bảng thư mục gốc (RDET)"
+          alt="Trích slide: RDET gồm các entry 32 byte; byte đầu 0 là trống, E5 là đã xóa; entry chính và entry phụ" />
         <Slide n={51} caption="entry chính" alt="Trích slide: các trường của entry chính và 8 bit thuộc tính" />
         <Slide n={52} caption="entry phụ" alt="Trích slide: các trường của entry phụ (tên dài)" />
-      </div>
-      <div className="slides-row">
         <Slide n={58} caption="bảng thư mục con (SDET)"
           alt="Trích slide: SDET nằm trên vùng dữ liệu, cấu trúc giống RDET, luôn có entry . và .." />
         <Slide n={59} caption="cấu trúc bảng thư mục con"
           alt="Trích slide: cấu trúc bảng thư mục con với . , .. , entry phụ N..1 rồi entry chính" />
-      </div>
+      </SlideStrip>
       <div className="prose">
         <p>Cách đọc từng entry 32 byte:</p>
         <ol>

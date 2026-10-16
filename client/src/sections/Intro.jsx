@@ -1,9 +1,13 @@
 import Calculators from "../components/Calculators.jsx";
 import { SectionHead } from "../components/Study.jsx";
 
-export function Hero() {
+export function Hero({ lessons = [], done = new Set() }) {
   return (
     <header className="hero" id="pham-vi">
+      <div className="hero-strip" aria-hidden="true">
+        <span>EB 58 90 4D 53 44 4F 53 35 2E 30 00 02 04 26 00</span>
+        <span className="hero-strip-asc">ëX.MSDOS5.0...&amp;.</span>
+      </div>
       <p className="eyebrow">Hệ điều hành · Quản lý tập tin · FAT32</p>
       <h1>FAT vừa đủ làm bài</h1>
       <p className="lead">
@@ -15,6 +19,16 @@ export function Hero() {
         Mỗi bước đi theo thứ tự: trích slide, giải thích, một ví dụ <b>làm mẫu</b> từng bước, phần <b>tự làm</b> trên
         chính hex dump của đề, rồi mới đến đáp án. Gặp chữ lạ thì tra <a href="#tu-dien">Từ điển</a>.
       </p>
+      <ol className="roadmap" aria-label="Lộ trình học">
+        {lessons.slice(1).map((s, i) => (
+          <li key={s.id} className={done.has(s.id) ? "done" : undefined}>
+            <a href={`#${s.id}`}>
+              <span className="roadmap-no">{done.has(s.id) ? "✓" : i + 1}</span>
+              <span className="roadmap-text"><small>{s.group}</small>{s.label}</span>
+            </a>
+          </li>
+        ))}
+      </ol>
       <div className="scope">
         <div className="need">
           <h3>Cần học</h3>

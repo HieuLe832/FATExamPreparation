@@ -73,6 +73,11 @@ python3 scripts/crop_slides.py /tmp/slides client/public/slides
 - UI language is Vietnamese with full diacritics.
 - Cite slides by showing the cropped slide image inline (`<Slide n={..} />`). Never write "see slide N":
   the user doesn't want to switch tabs. Captions name the topic, not the slide number.
+- The app shows **one lesson per screen** (hash routing in `App.jsx`: `#mbr`, `#boot`, …) with a course
+  outline, progress saved in `localStorage` (`fat-guide:done`), and Trước/Tiếp at the bottom. New lessons
+  are added to `GROUPS` in `App.jsx`.
+- Several related slides go in a `<SlideStrip>` (thumbnail strip, click to zoom); a single key slide is a
+  plain `<Slide>`. Don't stack many full-size slides.
 - Each lesson goes: slide crop → explanation → `<Example>` worked step by step → "Tự làm" for the rest →
   collapsed `<Answer>`. Answers stay collapsed so the learner tries first.
 - Write for a beginner: define every term the first time it appears (and add it to `Glossary.jsx`), show
@@ -108,8 +113,13 @@ python3 scripts/crop_slides.py /tmp/slides client/public/slides
   user asked for them to be separate.
 - **`pkill -f <name>` can match the shell running it** and kill your own command. Stop the dev server by
   PID or with Ctrl+C instead.
-- **Headless Firefox hangs in this environment.** To check rendering without a browser, server-render with
-  `npx vite build --ssr src/App.jsx` and `react-dom/server`.
+- **Headless Firefox hangs in this environment.** For screenshots use Playwright's Chromium, installed outside
+  the repo (`npm i playwright@1.48.2 && npx playwright install chromium` in a scratch folder). Check 390px
+  width for horizontal overflow: grids need `minmax(0, 1fr)` columns or wide hex dumps stretch the page.
+- **A fixed drawer inside a grid needs `align-self: stretch`**; the desktop sidebar's `align-self: start`
+  otherwise shrinks the mobile "Mục lục" panel.
+- **Headings use Bricolage Grotesque** (proportional, has Vietnamese). Keep monospace for hex, code and
+  labels only; diacritics look cramped in mono headings.
 - **Pick crop boxes on the 100 dpi render**; `crop_slides.py` scales them ×1.5 for the 150 dpi images. Crop
   below the "fit@hcmus" logo, and keep the slide title in the crop so it explains itself.
 - FAT-specific traps for the user (little-endian, cluster numbering from 2, no S_RDET on FAT32, FAT2 copy,
