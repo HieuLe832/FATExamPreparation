@@ -1,17 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchHexDump } from "../api/hexDumps.js";
 import { parseHex } from "../fat/dumps.js";
-import { annotate, h2, hx } from "../fat/annotate.js";
+import { annotate, entryRows, fatCells, focusNotes, h2, hp, whereText } from "../fat/annotate.js";
 
 const COLS = Array.from({ length: 16 }, (_, c) => c);
+const band = (i) => (i % 4) + 1;
 
-/**
- * Loads one dump of the mini disk from the backend, then renders it.
- * `focus`: [[offset, length], …] absolute byte ranges this step talks about; everything else is dimmed.
- * `from` / `to`: absolute offsets of the first and last row to show (default: the whole dump).
- * `bands`: [[offset, length], …] ranges painted in 4 cycling band colours (overrides the field colours).
- */
-export default function HexDump({ id, focus, from, to, bands }) {
+/** Loads a dump once per id (cached in api/hexDumps.js) and retries on demand. */
+export function useDump(id) {
   const [state, setState] = useState({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -22,22 +18,33 @@ export default function HexDump({ id, focus, from, to, bands }) {
       .catch((err) => alive && setState({ status: "error", message: err.message }));
     return () => { alive = false; };
   }, [id, attempt]);
+  return { ...state, retry: () => setAttempt((n) => n + 1) };
+}
 
-  if (state.status === "ready") return <HexDumpView d={state.dump} focus={focus} from={from} to={to} bands={bands} />;
+/**
+ * One dump of the mini disk, read from the backend. Nothing on it needs a click: what a step talks about
+ * is coloured, and a list under the dump says what each coloured part is.
+ * `focus`: [[offset, length], …] absolute ranges this step reads; each field gets a colour and a line in
+ *   the list, everything else is dimmed.
+ * `list`: "entries" colours each 32-byte directory entry and lists them; "cells" does the same for
+ *   4-byte FAT cells. `bands`: [[offset, length], …] ranges to colour with no list.
+ * `from` / `to`: absolute offsets of the first and last row to show (default: the whole dump).
+ */
+export default function HexDump({ id, focus, list, bands, from, to }) {
+  const s = useDump(id);
+  if (s.status === "ready") return <HexDumpView d={s.dump} focus={focus} list={list} bands={bands} from={from} to={to} />;
   return (
     <div className="dump">
-      <div className="info" role={state.status === "error" ? "alert" : "status"}>
-        {state.status === "loading" ? (
-          <div className="what">Đang tải hex dump…</div>
-        ) : (
+      <div className="dump-status" role={s.status === "error" ? "alert" : "status"}>
+        {s.status === "loading" ? "Đang tải hex dump…" : (
           <>
-            <div className="what">Chưa tải được hex dump ({state.message}).</div>
-            <div className="calc">
+            <span>Chưa tải được hex dump ({s.message}).</span>
+            <span className="muted">
               {import.meta.env.DEV
                 ? <>Chạy backend bằng <b>dotnet run --project server</b> rồi bấm thử lại.</>
                 : "Không kết nối được máy chủ, có thể nó đang cập nhật. Đợi vài giây rồi bấm thử lại."}
-            </div>
-            <button type="button" className="retry" onClick={() => setAttempt((n) => n + 1)}>Thử lại</button>
+            </span>
+            <button type="button" className="retry" onClick={s.retry}>Thử lại</button>
           </>
         )}
       </div>
@@ -45,65 +52,54 @@ export default function HexDump({ id, focus, from, to, bands }) {
   );
 }
 
-/** Clickable hex dump: each byte belongs to a field segment; selecting one explains it. */
-function HexDumpView({ d, focus, from, to, bands }) {
-  const { bytes, segs, owner } = useMemo(() => {
-    const bytes = parseHex(d.hex);
-    const segs = annotate(d.kind, bytes, d.base);
-    const owner = new Array(bytes.length);
-    segs.forEach((s, si) => { for (let k = 0; k < s.len; k++) owner[s.start + k] = si; });
-    return { bytes, segs, owner };
-  }, [d]);
-  const [sel, setSel] = useState(null);
-  const cur = sel === null ? null : segs[sel];
-
+function HexDumpView({ d, focus, list, bands, from, to }) {
+  const bytes = useMemo(() => parseHex(d.hex), [d]);
   const firstRow = from === undefined ? 0 : (from - d.base) / 16;
   const lastRow = to === undefined ? bytes.length / 16 - 1 : (to - d.base) / 16;
   const rows = Array.from({ length: lastRow - firstRow + 1 }, (_, i) => firstRow + i);
-  const inFocus = (i) => !focus || focus.some(([o, n]) => d.base + i >= o && d.base + i < o + n);
-  const band = (i) => (bands ?? []).findIndex(([o, n]) => d.base + i >= o && d.base + i < o + n) + 1;
 
-  const cellClass = (i, c) => {
-    const s = segs[owner[i]];
-    let cls = "b " + s.cls + (c === 8 ? " gap" : "") + (inFocus(i) ? "" : " dim") + (band(i) ? ` band-${((band(i) - 1) % 4) + 1}` : "");
-    if (owner[i] === sel) {
-      cls += " sel";
-      if (i === s.start || c === 0) cls += " sel-l";
-      if (i === s.start + s.len - 1 || c === 15) cls += " sel-r";
+  // Coloured ranges [absolute start, length] and the list that explains them.
+  const { marks, notes, entries, cells } = useMemo(() => {
+    if (list === "entries") {
+      const visible = d.base + firstRow * 16, end = d.base + (lastRow + 1) * 16;
+      const entries = entryRows(bytes, d.base).filter((r) => r.at >= visible && r.at < end);
+      return { entries, marks: entries.map((r) => [r.at, 32]) };
     }
+    if (list === "cells") {
+      const cells = fatCells(bytes, d.base);
+      return { cells, marks: cells.map((c) => [c.start, 4]) };
+    }
+    if (focus) {
+      const notes = focusNotes(annotate(d.kind, bytes, d.base), focus, d.base);
+      return { notes, marks: notes.map((n) => [n.start, n.len]) };
+    }
+    return { marks: bands ?? [] };
+  }, [d, bytes, focus, list, bands, firstRow, lastRow]);
+
+  const markOf = (abs) => marks.findIndex(([o, n]) => abs >= o && abs < o + n);
+  const cellClass = (i, c) => {
+    const m = markOf(d.base + i), prev = c === 0 ? -1 : markOf(d.base + i - 1);
+    let cls = "b" + (c === 8 ? " gap" : "");
+    if (m >= 0) cls += ` band-${band(m)}`;
+    else if (focus) cls += " dim";
+    if (m >= 0 && prev >= 0 && prev !== m) cls += " seam"; // a line where one field ends and the next begins
     return cls;
-  };
-  const pick = (i) => setSel(owner[i]);
-  const onKey = (e, i) => {
-    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(i); }
   };
 
   return (
     <div className="dump">
-      <div className="dump-head">
-        <h4>{d.title}</h4>
-      </div>
+      <h4 className="dump-title">{d.title}</h4>
       <div className="hexwrap">
-        <div className="hex" aria-label={d.title}>
-          <div className="row colhead">
+        <div className="hex" role="img" aria-label={`Hex dump: ${d.title}`}>
+          <div className="row colhead" aria-hidden="true">
             <span className="off">Offset</span>
-            <span className="bytes">
-              {COLS.map((c) => <span key={c} className={"b" + (c === 8 ? " gap" : "")} style={{ cursor: "default" }}>{c.toString(16).toUpperCase()}</span>)}
-            </span>
+            <span className="bytes">{COLS.map((c) => <span key={c} className={"b" + (c === 8 ? " gap" : "")}>{hp(c)}</span>)}</span>
           </div>
           {rows.map((r) => (
             <div className="row" key={r}>
-              <span className="off">{(d.base + r * 16).toString(16).toUpperCase().padStart(8, "0")}</span>
+              <span className="off">{hp(d.base + r * 16, 8)}</span>
               <span className="bytes">
-                {COLS.map((c) => {
-                  const i = r * 16 + c, first = segs[owner[i]].start === i;
-                  return (
-                    <span key={c} className={cellClass(i, c)} onClick={() => pick(i)}
-                      {...(first ? { tabIndex: 0, role: "button", onKeyDown: (e) => onKey(e, i) } : {})}>
-                      {h2(bytes[i])}
-                    </span>
-                  );
-                })}
+                {COLS.map((c) => <span key={c} className={cellClass(r * 16 + c, c)}>{h2(bytes[r * 16 + c])}</span>)}
               </span>
               <span className="asc">
                 {COLS.map((c) => { const ch = bytes[r * 16 + c]; return ch >= 0x20 && ch < 0x7f ? String.fromCharCode(ch) : "."; }).join("")}
@@ -112,17 +108,57 @@ function HexDumpView({ d, focus, from, to, bands }) {
           ))}
         </div>
       </div>
-      <div className="info" aria-live="polite">
-        {cur ? (
-          <>
-            <div className="what" dangerouslySetInnerHTML={{ __html: `${hx(d.base + cur.start, 5)} · ${cur.what}` }} />
-            {cur.calc && <div className="calc" dangerouslySetInnerHTML={{ __html: cur.calc }} />}
-            {cur.ent && <div className="ent" dangerouslySetInnerHTML={{ __html: cur.ent }} />}
-          </>
-        ) : (
-          <div className="hint">Bấm vào một byte để xem nó là gì.</div>
-        )}
-      </div>
+      {notes && <Notes notes={notes} />}
+      {entries && <Entries rows={entries} />}
+      {cells && <Cells cells={cells} />}
+    </div>
+  );
+}
+
+function Notes({ notes }) {
+  return (
+    <ol className="reads">
+      {notes.map((n, i) => (
+        <li key={n.start}>
+          <span className={`chip band-${band(i)}`} aria-hidden="true" />
+          <div>
+            <b dangerouslySetInnerHTML={{ __html: n.what }} /> <span className="where">{whereText(n.start, n.len)}</span>
+            {n.calc && <div className="calc" dangerouslySetInnerHTML={{ __html: n.calc }} />}
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function Entries({ rows }) {
+  return (
+    <div className="tablewrap">
+      <table className="t entries">
+        <thead><tr><th>Entry ở</th><th>Byte đầu</th><th>Byte 0B</th><th>Đọc ra</th></tr></thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={r.at} className={r.skip ? "skip" : undefined}>
+              <td className="mono"><span className={`chip band-${band(i)}`} aria-hidden="true" />{hp(r.at)}</td>
+              <td className="mono">{r.first}</td>
+              <td className="mono">{r.attr}</td>
+              <td>{r.text}{r.skip && r.text !== "hết bảng" && <span className="skip-tag">bỏ qua</span>}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function Cells({ cells }) {
+  return (
+    <div className="cells" role="list" aria-label="Giá trị từng ô FAT">
+      {cells.map((c, i) => (
+        <div role="listitem" key={c.k} className={`cell band-${band(i)} ${c.kind}`}>
+          <span>ô {c.k}</span><b>{c.text}</b>
+        </div>
+      ))}
     </div>
   );
 }

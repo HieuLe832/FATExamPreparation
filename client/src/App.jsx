@@ -1,52 +1,53 @@
 import { useCallback, useEffect, useState } from "react";
-import { Hero, HexBasics } from "./sections/Intro.jsx";
-import WhatIsFat from "./sections/WhatIsFat.jsx";
-import { BootConcept, DirConcept, DiskConcept, EntryConcept, FatConcept, VolumeConcept } from "./sections/Concepts.jsx";
-import MiniExercise from "./sections/MiniExercise.jsx";
-import Glossary from "./sections/Glossary.jsx";
+import Start from "./sections/Start.jsx";
+import HexSkills from "./sections/HexSkills.jsx";
+import DiskOverview from "./sections/DiskOverview.jsx";
 import Mbr from "./sections/Mbr.jsx";
-import { Boot, Directories, Fat } from "./sections/Volume.jsx";
+import Boot from "./sections/Boot.jsx";
+import Fat from "./sections/Fat.jsx";
+import Tree from "./sections/Tree.jsx";
 import Operations from "./sections/Operations.jsx";
-import RealExercise from "./sections/RealExercise.jsx";
-import { CheatSheet, Pitfalls } from "./sections/Reference.jsx";
+import MustKnow from "./sections/Reference.jsx";
+import Glossary from "./sections/Glossary.jsx";
 
-// One lesson is shown at a time; the URL hash (#mbr, #boot, …) says which.
+// One page is shown at a time; the URL hash (#cau-1, #cau-2a, …) says which. The course follows the exam:
+// two foundation pages, then one page per exam question, then the review sheet.
 const GROUPS = [
-  { name: "Giới thiệu", steps: [
-    { id: "pham-vi", label: "Tổng quan", Page: Hero },
+  { name: "Bắt đầu", steps: [
+    { id: "bat-dau", label: "Đề thi gồm những gì", Page: Start },
   ] },
-  { name: "Kiến thức nền", steps: [
-    { id: "fat-la-gi", label: "FAT là gì?", Page: WhatIsFat },
-    { id: "hex", label: "Byte và hex", Page: HexBasics },
-    { id: "o-cung", label: "Ổ cứng, MBR, phân vùng", Page: DiskConcept },
-    { id: "volume", label: "Bên trong volume FAT32", Page: VolumeConcept },
-    { id: "boot-sector", label: "Boot sector", Page: BootConcept },
-    { id: "bang-fat", label: "Bảng FAT", Page: FatConcept },
-    { id: "thu-muc", label: "Thư mục: RDET, SDET", Page: DirConcept },
-    { id: "entry", label: "Một entry 32 byte", Page: EntryConcept },
+  { name: "Nền tảng", steps: [
+    { id: "hex", label: "Đọc hex dump", Page: HexSkills },
+    { id: "o-dia", label: "Ổ đĩa được chia thế nào", Page: DiskOverview },
   ] },
-  { name: "Đề mini", steps: [
-    { id: "de-mini", label: "Đề mini hỏi gì", Page: MiniExercise },
-    { id: "mbr", label: "1 · MBR", Page: Mbr },
-    { id: "boot", label: "2a · Boot sector", Page: Boot },
-    { id: "fat", label: "2b · Bảng FAT", Page: Fat },
-    { id: "dir", label: "2b · Thư mục và cây", Page: Directories },
-    { id: "ops", label: "2c–e · Move, Xóa, Copy", Page: Operations },
+  { name: "Giải từng câu", steps: [
+    { id: "cau-1", label: "Câu 1 · MBR", Page: Mbr },
+    { id: "cau-2a", label: "Câu 2a · Boot sector", Page: Boot },
+    { id: "cau-2b-fat", label: "Câu 2b · Bảng FAT", Page: Fat },
+    { id: "cau-2b-cay", label: "Câu 2b · Cây thư mục", Page: Tree },
+    { id: "cau-2cde", label: "Câu 2c–e · Move, Xóa, Copy", Page: Operations },
   ] },
-  { name: "Đề thật", steps: [
-    { id: "de-that", label: "Làm Baitap_HTTT", Page: RealExercise },
-  ] },
-  { name: "Tra cứu", steps: [
-    { id: "pitfalls", label: "Lỗi hay gặp", Page: Pitfalls },
-    { id: "cheat", label: "Tóm tắt công thức", Page: CheatSheet },
-    { id: "tu-dien", label: "Từ điển", Page: Glossary },
+  { name: "Ôn tập", steps: [
+    { id: "phai-thuoc", label: "Bảng phải thuộc", Page: MustKnow },
+    { id: "tu-dien", label: "Từ điển, máy tính", Page: Glossary, reference: true },
   ] },
 ];
 const STEPS = GROUPS.flatMap((g) => g.steps.map((s) => ({ ...s, group: g.name })));
-const LESSONS = STEPS.filter((s) => s.group !== "Tra cứu");
+const LESSONS = STEPS.filter((s) => !s.reference);
 const PROGRESS_KEY = "fat-guide:done";
 
-const stepFromHash = () => STEPS.find((s) => s.id === window.location.hash.slice(1)) ?? STEPS[0];
+// Hashes from the previous layout, so old links still land on the matching page.
+const OLD_HASHES = {
+  "pham-vi": "bat-dau", "de-mini": "bat-dau", "fat-la-gi": "o-dia", "o-cung": "o-dia", volume: "o-dia",
+  mbr: "cau-1", "boot-sector": "cau-2a", boot: "cau-2a", "bang-fat": "cau-2b-fat", fat: "cau-2b-fat",
+  "thu-muc": "cau-2b-cay", entry: "cau-2b-cay", dir: "cau-2b-cay", ops: "cau-2cde", "de-that": "cau-1",
+  pitfalls: "phai-thuoc", cheat: "phai-thuoc",
+};
+
+const stepFromHash = () => {
+  const id = window.location.hash.slice(1);
+  return STEPS.find((s) => s.id === (OLD_HASHES[id] ?? id)) ?? STEPS[0];
+};
 
 function useProgress() {
   const [done, setDone] = useState(() => {
@@ -128,7 +129,7 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <div className="topbar-inner">
-          <a className="brand" href="#pham-vi"><span className="brand-mark" aria-hidden="true">FAT</span><span>Hướng dẫn giải bài tập</span></a>
+          <a className="brand" href="#bat-dau"><span className="brand-mark" aria-hidden="true">FAT</span><span>Giải bài tập hệ thống tập tin</span></a>
           <div className="progress" title={`Đã xong ${finished}/${LESSONS.length} bước`}>
             <span className="progress-text">{finished}/{LESSONS.length} bước</span>
             <span className="progress-bar" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Tiến độ học">
@@ -144,7 +145,7 @@ export default function App() {
       <div className="shell">
         <aside id="outline-panel" className={"sidebar" + (menuOpen ? " open" : "")}>
           <Outline current={step.id} done={done} onPick={closeMenu} />
-          {done.size > 0 && <button type="button" className="reset" onClick={reset}>Xóa tiến độ</button>}
+          {finished > 0 && <button type="button" className="reset" onClick={reset}>Xóa tiến độ</button>}
         </aside>
 
         <main key={step.id}>

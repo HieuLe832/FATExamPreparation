@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { parseHex, DATA_START, SECTORS_PER_CLUSTER, FAT_START_OFFSET } from "./dumps.js";
-import { annotate, decodeEntry, le } from "./annotate.js";
+import { annotate, decodeEntry, entryRows, fatCells, focusNotes, le, whereText } from "./annotate.js";
 
 // The dumps are the backend's data; the decoders that read them live here.
 const json = JSON.parse(readFileSync(new URL("../../../server/Data/hex-dumps.json", import.meta.url), "utf8"));
@@ -77,4 +77,21 @@ test("mini directories decode to the tree on the page", () => {
   assert.equal(decodeEntry(r, 0x40).chars, "Bai tap.doc");
   assert.equal(decodeEntry(r, 0xa0).deleted, true);
   assert.deepEqual([sectorOf(3), sectorOf(7), sectorOf(9), sectorOf(12), sectorOf(6)], [12, 20, 24, 30, 18]);
+});
+
+test("static notes under the dumps: fields, entry table, FAT cells", () => {
+  const r = bytes("rdet"), base = DUMPS.rdet.base;
+  const hello = focusNotes(annotate("dir", r, base), [[0x1420, 12], [0x1434, 2], [0x143a, 6]], base);
+  assert.deepEqual(hello.map((x) => [x.start.toString(16), x.len]), [["1420", 8], ["1428", 3], ["142b", 1], ["1434", 2], ["143a", 2], ["143c", 4]]);
+  assert.match(hello[4].calc, /= <b>3<\/b>/);
+  assert.match(hello[5].calc, /= <b>1\u00a0280<\/b> byte/);
+  const lfn = focusNotes(annotate("dir", r, base), [[0x1440, 12], [0x144e, 12], [0x145c, 4]], base);
+  assert.deepEqual(lfn.map((x) => x.calc.split("→").pop().trim()), ["entry phụ số 1 (có cộng 40: là mảnh cuối của tên)", "“Bai t”", "<b>entry phụ</b> (mảnh tên dài)", "“ap.doc”", "hết tên"]);
+  assert.equal(whereText(0x143a, 2), "dòng 00001430 · cột A–B");
+  assert.equal(whereText(0x144e, 12), "dòng 00001440 cột E → dòng 00001450 cột 9");
+  const rows = entryRows(r, base);
+  assert.deepEqual(rows.map((x) => [x.at.toString(16), x.skip]), [["1400", true], ["1420", false], ["1440", false], ["1460", false], ["1480", false], ["14a0", true], ["14c0", true]]);
+  assert.deepEqual(entryRows(bytes("docs"), DUMPS.docs.base).map((x) => x.skip), [true, true, false, true]);
+  const cells = fatCells(bytes("fat"), DUMPS.fat.base);
+  assert.deepEqual(cells.slice(2, 13).map((c) => c.text), ["hết", "→ 4", "hết", "hết", "trống", "→ 9", "hết", "→ 12", "trống", "trống", "hết"]);
 });

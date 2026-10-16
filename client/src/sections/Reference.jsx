@@ -1,53 +1,97 @@
-import { SectionHead, Table } from "../components/Study.jsx";
+// "Bảng phải thuộc": every highlighted fact from the question pages, grouped by question, plus the
+// mistakes that cost marks. Keep it in sync with the Recipe boxes and the Traps lists.
+import { PageHead, Table } from "../components/Study.jsx";
+
+const SB = <>S<sub>B</sub></>, SC = <>S<sub>C</sub></>, NF = <>N<sub>F</sub></>, SF = <>S<sub>F</sub></>, SV = <>S<sub>V</sub></>;
+const c = (s) => <code>{s}</code>;
 
 const PITFALLS = [
-  ["Đọc xuôi số nhiều byte", <><code>26 00</code> là 38 (đọc ngược), không phải 9728.</>],
-  ["Quên cluster bắt đầu từ 2", <>Cluster k = Data + (k − <b>2</b>) × S<sub>C</sub>.</>],
-  ["Cộng thêm vùng RDET riêng", "FAT32 không có. RDET nằm trong vùng Data, ở cluster 2."],
-  ["Coi mảnh tên dài là file", <>Entry có byte <code>0B</code> = <code>0F</code> chỉ là một phần của tên.</>],
-  ["Đưa file đã xóa vào cây", <>Byte đầu <code>E5</code> = đã xóa. Bỏ qua.</>],
-  ["Nhầm byte 0C là thuộc tính", <>Thuộc tính ở <code>0B</code>.</>],
-  ["Lấy kích thước thư mục từ entry", "Luôn là 0. Xem chuỗi FAT."],
-  ["Đếm sector theo kích thước file", "Đếm theo cluster: file 1280 byte vẫn chiếm trọn 2 cluster."],
-  ["Quên FAT2", "Sửa FAT là sửa cả 2 bảng FAT."],
-  ["Nghĩ XÓA làm mất nội dung", "Nội dung vẫn còn. Chỉ entry và ô FAT bị đổi."],
+  ["Đọc xuôi số nhiều byte", <>{c("26 00")} là 38 (đảo lại), không phải 9 728.</>],
+  ["Quên cluster đánh số từ 2", <>Cluster k = Data + (k − <b>2</b>) × {SC}.</>],
+  ["Cộng thêm vùng RDET riêng", "FAT32 không có. RDET nằm trong Data, ở cluster 2: sector đầu RDET = sector đầu Data."],
+  ["Coi mảnh tên dài là tập tin", <>Entry có byte {c("0B")} = {c("0F")} chỉ là một phần của tên.</>],
+  ["Ghép tên dài từ trên xuống", "Mảnh số 1 nằm sát entry chính; đọc từ dưới lên."],
+  ["Đưa entry đã xóa, tên ổ vào cây", <>Byte đầu {c("E5")} = đã xóa; byte 0B = {c("08")} = tên ổ. Bỏ qua cả hai.</>],
+  ["Đọc thuộc tính ở byte 0C", <>Thuộc tính ở {c("0B")}.</>],
+  ["Lấy kích thước thư mục từ entry", "Luôn là 0. Sector của thư mục tính từ chuỗi FAT."],
+  ["Đếm sector theo kích thước tập tin", "Đếm theo cluster: tập tin luôn chiếm trọn cluster."],
+  ["Quên FAT2", "Sửa bảng FAT là sửa cả FAT1 và FAT2."],
+  ["Nghĩ XÓA làm mất nội dung", "Data không đổi. Chỉ entry và ô FAT bị sửa."],
+  ["Làm 2d, 2e trên kết quả câu trước", "Mỗi câu 2c, 2d, 2e bắt đầu lại từ đĩa ban đầu."],
   ["MBR: quên × 512", "Dung lượng = số sector × 512 byte."],
 ];
 
-export function Pitfalls() {
+export default function MustKnow() {
   return (
-    <section id="pitfalls">
-      <SectionHead tag="Tra cứu" title="Lỗi hay gặp" />
-      <ol className="pitfalls">
-        {PITFALLS.map(([title, body], i) => (
-          <li key={i}><div><b>{title}</b><p>{body}</p></div></li>
-        ))}
-      </ol>
-    </section>
-  );
-}
+    <section className="cheatsheet">
+      <PageHead tag="Ôn tập" title="Bảng phải thuộc" lead="Mọi chỗ tô vàng ở các trang trước, gom theo câu. Đọc lại trang này trước khi vào thi." />
 
-export function CheatSheet() {
-  return (
-    <section id="cheat">
-      <SectionHead tag="Tra cứu" title="Tóm tắt công thức" />
-      <Table
-        wrapStyle={{ maxWidth: 900 }}
-        head={["Cần", "Lấy ở đâu / tính thế nào"]}
-        rows={[
-          ["Phân vùng trong MBR", <>4 entry × 16 B tại <code>1BE</code>; +0 active (80), +4 loại, +8 LBA đầu, +C số sector</>],
-          [<>Byte/sector, S<sub>C</sub>, S<sub>B</sub>, N<sub>F</sub></>, <>Boot sector: <code>0B</code> (2), <code>0D</code> (1), <code>0E</code> (2), <code>10</code> (1)</>],
-          [<>S<sub>V</sub>, S<sub>F</sub>, cluster RDET, loại FAT</>, <><code>20</code> (4), <code>24</code> (4), <code>2C</code> (4), <code>52</code> (8 ký tự)</>],
-          ["Sector đầu FAT1 / FAT2 / Data", <>S<sub>B</sub> / S<sub>B</sub> + S<sub>F</sub> / S<sub>B</sub> + N<sub>F</sub>·S<sub>F</sub></>],
-          ["Cluster k → sector", <>Data + (k − 2)·S<sub>C</sub> … + S<sub>C</sub> − 1</>],
-          ["Phần tử FAT32 k", <>Byte 4k của bảng → sector S<sub>B</sub> + ⌊4k / 512⌋; 0 trống, 0FFFFFFF EOF</>],
-          ["Entry chính", <>tên <code>0</code>(8) · đuôi <code>8</code>(3) · thuộc tính <code>0B</code> · cluster cao <code>14</code> · cluster thấp <code>1A</code> · size <code>1C</code>(4)</>],
-          ["Entry phụ", <>thứ tự <code>0</code> · 5 ký tự <code>1</code> · <code>0B</code> = 0F · 6 ký tự <code>0E</code> · 2 ký tự <code>1C</code></>],
-          ["DELETE", "E5 ở entry (chính + phụ); phần tử FAT → 0 (cả 2 bảng); Data giữ nguyên"],
-          ["MOVE (cùng volume)", "Ghi entry ở thư mục đích; E5 ở thư mục nguồn; FAT, Data giữ nguyên"],
-          ["COPY", "Entry mới ở thư mục đích; cluster trống đầu tiên → chuỗi FAT mới (cả 2 bảng); ghi Data mới"],
-        ]}
-      />
+      <h2>Đọc hex</h2>
+      <ul className="facts">
+        <li>Số 2 hoặc 4 byte: <b>đảo thứ tự byte</b> rồi mới đổi. Chữ thì đọc xuôi.</li>
+        <li>1 sector = 512 byte = {c("200")} hex. Sector = offset ÷ 512.</li>
+      </ul>
+
+      <h2>Câu 1 · MBR</h2>
+      <Table head={["Byte", "Nghĩa"]} rows={[
+        [c("1BE, 1CE, 1DE, 1EE"), "4 dòng phân vùng, mỗi dòng 16 byte. Dòng toàn 00 = không có"],
+        [c("+0"), <>{c("80")} = phân vùng khởi động</>],
+        [c("+4"), <>Loại: {c("07")} NTFS · {c("0B")}, {c("0C")} FAT32 · {c("83")} Linux · {c("05")}, {c("0F")} Extended</>],
+        [c("+C"), "Số sector (4 byte). Dung lượng = số sector × 512"],
+      ]} />
+
+      <h2>Câu 2a · Boot sector</h2>
+      <Table head={["Byte", "Dài", "Nghĩa"]} rows={[
+        [c("0B"), "2", "Số byte / sector"],
+        [c("0D"), "1", <>{SC}: số sector / cluster</>],
+        [c("0E"), "2", <>{SB}: số sector vùng boot</>],
+        [c("10"), "1", <>{NF}: số bảng FAT</>],
+        [c("20"), "4", <>{SV}: tổng số sector của volume</>],
+        [c("24"), "4", <>{SF}: số sector / bảng FAT</>],
+        [c("2C"), "4", "Cluster đầu của RDET"],
+        [c("52"), "8", "Loại FAT (chữ)"],
+      ]} />
+      <div className="formulas">
+        <span>FAT1 = {SB}</span>
+        <span>FAT2 = {SB} + {SF}</span>
+        <span>Data = {SB} + {NF} × {SF}</span>
+        <span>RDET = Data (cluster 2)</span>
+        <span>Dung lượng = {SV} × 512</span>
+      </div>
+
+      <h2>Câu 2b · Bảng FAT</h2>
+      <ul className="facts">
+        <li>Ô k ở byte 4 × k của bảng. Đọc ngược 4 byte: {c("0")} trống · {c("0FFFFFFF")} hết · số khác = cluster tiếp theo.</li>
+        <li>Cluster k bắt đầu ở sector Data + (k − 2) × {SC}, dài {SC} sector.</li>
+      </ul>
+
+      <h2>Câu 2b · Thư mục</h2>
+      <Table head={["Ở đâu", "Nghĩa"]} rows={[
+        ["Byte đầu", <>{c("00")} hết bảng · {c("E5")} đã xóa</>],
+        [c("0B"), <>{c("0F")} mảnh tên dài · {c("08")} tên ổ · {c("10")} thư mục · {c("20")} tập tin</>],
+        ["Cờ thuộc tính", <>R {c("01")} · H {c("02")} · S {c("04")} · V {c("08")} · D {c("10")} · A {c("20")}; byte 0B là tổng</>],
+        [c("00–07, 08–0A"), "Tên, đuôi"],
+        [c("14–15 + 1A–1B"), "Cluster đầu (2 byte cao, 2 byte thấp)"],
+        [c("1C–1F"), "Kích thước (thư mục: 0)"],
+        ["Tên dài", "Mảnh tên ngay trên entry chính, đọc từ dưới lên; mỗi chữ 2 byte"],
+        ["SDET", "Bỏ qua “.” và “..”"],
+      ]} />
+
+      <h2>Câu 2c–e · MOVE, XÓA, COPY</h2>
+      <Table head={["Lệnh", "FAT", "Thư mục chứa tập tin", "Thư mục đích", "Data"]} rows={[
+        [<b>MOVE</b>, "không đổi", "entry → E5", "thêm entry", "không đổi"],
+        [<b>XÓA</b>, "ô → 0 (cả 2 bảng)", "entry → E5", "", "không đổi"],
+        [<b>COPY</b>, "chuỗi mới (cả 2 bảng)", "không đổi", "thêm entry", "cluster mới"],
+      ]} />
+      <ul className="facts">
+        <li>Entry ở byte e → sector đầu thư mục + ⌊e ÷ 512⌋. Ô FAT k → FAT1 + ⌊4k ÷ 512⌋ và FAT2 + ⌊4k ÷ 512⌋.</li>
+        <li>COPY: số cluster = kích thước ÷ ({SC} × 512), làm tròn lên; lấy các ô trống đầu tiên.</li>
+      </ul>
+
+      <h2>Lỗi hay gặp</h2>
+      <ol className="pitfalls">
+        {PITFALLS.map(([title, body], i) => <li key={i}><b>{title}</b><span>{body}</span></li>)}
+      </ol>
     </section>
   );
 }

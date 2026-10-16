@@ -9,18 +9,26 @@ exercise (bài 1: MBR partitions; bài 2a–e: a FAT32 volume read from hex dump
 **Audience: students who are "mất gốc"** (weak on the basics). Assume they don't know hex, bytes,
 little-endian, or what a sector is.
 
-**Foundations come first ("Kiến thức nền", `sections/Concepts.jsx` plus `WhatIsFat`/`HexBasics`).** The user
-said the basics were too thin: learners must know what MBR, a partition, the volume regions, the boot
-sector, the FAT, RDET/SDET and an entry are before the exercise. Each gets one concept page answering
-*what it is*, *what it's for* and *what it looks like* (a diagram plus how it appears in hex), without the
-byte-by-byte decoding the lessons do. Concept pages use generic examples (README.TXT, PHOTOS, file A/B) so
-they don't give away mini-exercise answers. Each mini lesson starts with `<Prereq>` links back to them.
+**The exam is the spine.** The user's teacher gives a test in the same format as Baitap_HTTT. The user
+found the earlier version messy: concepts sat on 8 separate pages away from where they were used, nothing
+said what mattered for the test, and content hidden behind clicks was never opened ("người dùng sẽ không bao
+giờ bấm vào các ô để xem"). So:
 
-**Teaching approach: divide and conquer on a mini exercise.** Don't copy Baitap_HTTT into the lessons.
-The lessons solve a small made-up disk (`server/Data/hex-dumps.json`) with the same question types and
-round numbers, split into small `<SubStep>`s, each ending in a one-question `<Check>`. Only the last
-lesson ("Làm đề thật") refers to the real exercise: a mini → real number mapping plus collapsed answers,
-no copied hex dumps. Explain FAT with analogies: directory = mục lục, FAT = linked list / truy tìm kho báu.
+- **One page per exam question** (`Mbr`, `Boot`, `Fat`, `Tree`, `Operations`), after two foundation pages
+  (`HexSkills`: reading a dump; `DiskOverview`: how MBR, volume, FAT, RDET/SDET, clusters connect, with
+  the exam question under each part). Concepts are taught on the question page that uses them ("Hiểu
+  nhanh"), not on separate pages.
+- **Importance is explicit.** `<Must>` (yellow highlight) marks what to memorise; every Must also appears
+  on `Reference.jsx` ("Bảng phải thuộc"). Each `<Recipe>` has a `skip` line listing what the exam never asks.
+- **Pages link to each other.** `<DiskStrip on=…>` shows where on the disk the page works; `<Known>` lists
+  the numbers taken from earlier questions; results say which later question uses them.
+- **Nothing hidden behind a click.** No `<details>`, no "bấm để xem" checks or answers, no click-to-explain
+  bytes. Hex dumps colour what a step reads and list each field (position, bytes, reversal, meaning) under
+  the dump (`focus`, `list="entries"`, `list="cells"`).
+- **Mini first, real right after, same page.** Each question page solves the mini disk
+  (`server/Data/hex-dumps.json`, round numbers) step by step, then applies the same steps to Baitap_HTTT in
+  a violet `<Real>` block from `RealExercise.jsx` (byte locations as printed in the PDF, arithmetic shown,
+  final answer). Explain FAT with analogies: directory = mục lục, FAT = linked list.
 
 ## Stack
 
@@ -50,10 +58,11 @@ no copied hex dumps. Explain FAT with analogies: directory = mục lục, FAT = 
 | `server/Models/` | `HexDump`, `HexDumpSummary` |
 | `client/src/api/hexDumps.js` | Fetches a dump from the API |
 | `client/src/fat/dumps.js` | Mini disk layout constants (data start 10, 2 sectors/cluster, FAT1 at sector 6) and `parseHex` |
-| `client/src/fat/annotate.js` | Pure decoders: MBR, boot sector, FAT32 elements, directory entries |
-| `client/src/fat/annotate.test.js` | Pins the dumps to the answers shown on the page |
-| `client/src/components/` | `HexDump` (clickable dump), `Calculators`, shared `Study` blocks |
-| `client/src/sections/` | `Intro` (start, byte/hex), `WhatIsFat`, `Concepts` (6 concept pages), `MiniExercise`, `Mbr`, `Volume`, `Operations`, `RealExercise`, `Reference`, `Glossary` |
+| `client/src/fat/annotate.js` | Pure decoders (MBR, boot sector, FAT32 cells, directory entries) and the static notes under dumps (`focusNotes`, `entryRows`, `fatCells`) |
+| `client/src/fat/annotate.test.js` | Pins the mini dumps to the answers shown on the page |
+| `client/src/fat/baitap.fixture.json`, `baitap.test.js` | Dumps transcribed from Baitap_HTTT.pdf (test data only) and the test that pins every number in `RealExercise.jsx` |
+| `client/src/components/` | `HexDump` (coloured dump + list), `Calculators`, shared `Study` blocks |
+| `client/src/sections/` | `Start`, `HexSkills`, `DiskOverview`, `Mbr` (câu 1), `Boot` (2a), `Fat` (2b), `Tree` (2b), `Operations` (2c–e), `RealExercise` (real-exercise block per question), `Reference` (Bảng phải thuộc + lỗi hay gặp), `Glossary` (+ calculators) |
 | `client/vercel.json` | Vercel build settings |
 | `deploy/vm/` | VM stack: `docker-compose.yml` (api + caddy), `Caddyfile`, `deploy.sh` (run by CD), `setup.sh` (one-time Docker install) |
 | `.github/workflows/deploy-api.yml` | CD for the API to the VM |
@@ -99,22 +108,24 @@ never in the repo.
 - UI language is Vietnamese with full diacritics.
 - **Neutral, textbook tone.** No slogans, jokes or chatty taglines: the user found "FAT vừa đủ làm bài",
   "Mang vào phòng thi trong đầu", "Sẵn sàng?" and book analogies like "phần ruột cuốn sách" cringe. Section tags
-  are just the group name (Kiến thức nền, Đề mini, Đề thật, Tra cứu).
+  are just the group name or the exam question (Bắt đầu, Nền tảng, Câu 2a, Ôn tập).
 - **No slide images or slide-number references.** The user found the crops hard to read. Show what's
   needed directly as text and small tables.
-- The app shows **one lesson per screen** (hash routing in `App.jsx`: `#mbr`, `#boot`, …) with a course
-  outline, progress saved in `localStorage` (`fat-guide:done`), and Trước/Tiếp at the bottom. New lessons
-  are added to `GROUPS` in `App.jsx`.
-- Each lesson goes: `<Goal>` (1 line) → `<SubSteps>` → collapsed `<Answer>` "Ghép lại" that assembles the
-  part's full answer. Each sub-step reads top to bottom: 1–2 sentences or a tiny table → its own
-  `<HexDump id focus={[[offset, len], …]} from to />` showing only the rows it needs with its bytes lit and
-  the rest dimmed → a `<Check>`. Never put one dump at the top of a lesson for the steps to point back to
-  (the user flagged that ordering), and never preselect a field: the info box would spoil the next step.
-- **Keep it short. The user rejected a wordy version as hard to understand.** No paragraphs longer than 2
-  sentences, no meta text ("trang này dạy…"), no explanation the exercise doesn't need. Answers are a table
-  plus at most one line. A lesson page should stay under ~180 words outside hex dumps and answers.
+- The app shows **one page per screen** (hash routing in `App.jsx`: `#cau-1`, `#cau-2a`, …; old hashes
+  are redirected in `OLD_HASHES`) with a course outline, progress saved in `localStorage`
+  (`fat-guide:done`), and Trước/Tiếp at the bottom. New pages are added to `GROUPS` in `App.jsx`.
+- Every question page has the same skeleton: `<PageHead>` → `<Ask>` (đề cho / đề hỏi, in the exam's words)
+  → `<DiskStrip>` → "Hiểu nhanh" → "Cách giải" `<Recipe>` → "Làm mẫu trên đề mini" (`<Known>`, `<Steps>`,
+  `<Final>`) → "Làm trên đề thật" (`<RealX />`) → "Dễ sai" `<Traps>`. Keep that order on new pages.
+- Each worked step reads top to bottom: 1–2 sentences → its own `<HexDump>` showing only the rows it needs
+  → a visible `<Result>` or `<Calc>`. Never put one dump at the top of a page for the steps to point back to.
+- **Keep prose short. The user rejected a wordy version as hard to understand.** No paragraph longer than 2
+  sentences, no meta text ("trang này dạy…"), no explanation the exam doesn't need. Prefer tables, numbers
+  and arithmetic over sentences.
 - Write for a beginner: plain words, show the arithmetic (`26 = 2 × 16 + 6 = 38`), say where a byte is
   (row, column). New terms go in `Glossary.jsx` with a one-line meaning.
+- Group digits with no-break spaces (`2 097 152`, as `num()` in `annotate.js` does) so a number
+  never wraps mid-way.
 - Commit messages: `type: summary` (e.g. `feat: add FAT chain lesson`, `fix: correct cluster 11 sector`).
 
 ## Known pitfalls
@@ -126,8 +137,10 @@ never in the repo.
   (it pins partitions, the 6/2/2 layout, FAT chains, the tree and the long-name checksum entry).
 - **Answer text is hand-written in `sections/`**, separately from the decoders. A change to a dump or
   formula means updating both the prose answers and the tests.
-- **`calc` and `ent` strings from `annotate.js` render as HTML.** Any text that comes from dump bytes
-  must go through `esc()`.
+- **`what` and `calc` strings from `annotate.js` render as HTML.** Any text that comes from dump bytes
+  must go through `esc()`. `entryRows` returns plain text that React escapes.
+- **A `<Must>` added to a question page must also go on `Reference.jsx`**, and a new trap in `<Traps>`
+  belongs in its "Lỗi hay gặp" list.
 - **Don't put `Urls` in `appsettings.json`.** It overrides `ASPNETCORE_URLS`/`HTTP_PORTS`, so the container
   binds to `localhost` and can't be reached. The local port (5080) lives in
   `server/Properties/launchSettings.json`, which only `dotnet run` reads.
@@ -170,8 +183,10 @@ never in the repo.
   labels only; diacritics look cramped in mono headings.
 - **2c, 2d, 2e each start from the original mini disk**, as in the real exercise. Offsets in their answers
   (entry 1420, 2040, 2060…) assume that.
-- **Real-exercise answers live only in `RealExercise.jsx`** and were verified against Baitap_HTTT.pdf
-  (git history before the mini rewrite has the transcribed real dumps and tests if they're ever needed).
+- **Real-exercise answers live only in `RealExercise.jsx`**, one exported block per question. Every
+  number there is pinned by `baitap.test.js` against the transcribed dumps; change both together.
 - FAT-specific traps for the user (little-endian, cluster numbering from 2, no S_RDET on FAT32, FAT2 copy,
-  E5/LFN entries, and so on) are listed on the page under "Lỗi hay gặp" (`sections/Reference.jsx`). Keep
-  that list in sync when you add lessons.
+  E5/LFN entries, and so on) are listed under "Dễ sai" on each question page and together under "Lỗi hay
+  gặp" (`sections/Reference.jsx`). Keep both in sync.
+- **`HexDump` is not interactive.** The user said learners never click. Don't bring back click-to-select
+  bytes or an info box; put what a step needs in the list under the dump.
