@@ -298,3 +298,13 @@ figure.slide.narrow { max-width: 440px; }
   table.t thead th { white-space: normal; }
   .roadmap { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-flow: row; }
 }
+
+/* ---------- goal line and "cần nhớ" box (third pass: shorter lessons) ---------- */
+.goal { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 1.12rem; font-weight: 500; max-width: 64ch; }
+.goal > span { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.keypoints { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; display: grid; gap: 10px; max-width: 76ch; box-shadow: var(--shadow); min-width: 0; }
+.keypoints > strong { font-family: var(--font-display); font-size: 1.05rem; }
+.keypoints ul, .keypoints ol { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; }
+.keypoints p { margin: 0; }
+.keypoints .tablewrap { margin-inline: -4px; }
+.note { margin: 0; color: var(--muted); font-size: 0.92rem; }

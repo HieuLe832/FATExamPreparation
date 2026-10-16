@@ -93,3 +93,18 @@ export function Example({ title, children }) {
     </div>
   );
 }
+
+/** One line: what the learner can do after this lesson. */
+export function Goal({ children }) {
+  return <p className="goal"><span>Mục tiêu</span>{children}</p>;
+}
+
+/** The few rules to remember, as short bullets. */
+export function KeyPoints({ title = "Cần nhớ", children }) {
+  return (
+    <div className="keypoints">
+      <strong>{title}</strong>
+      {children}
+    </div>
+  );
+}

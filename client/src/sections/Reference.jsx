@@ -1,22 +1,17 @@
 import { SectionHead, Table } from "../components/Study.jsx";
 
 const PITFALLS = [
-  ["Đọc xuôi số little-endian", <><code>26 00</code> là 38, không phải 0x2600 = 9728. Chỉ chuỗi ký tự mới đọc xuôi.</>],
-  ["Lẫn hệ 16 và hệ 10", <>Offset trong bảng slide là hex: <code>1C</code> = 28, <code>2C</code> = 44. Giá trị <code>2D 03</code> = 0x32D = 813, không phải 32D.</>],
-  ["Quên cluster bắt đầu từ 2", <>Cluster k ở sector Data + (k − 2)·S<sub>C</sub>. Cluster 20 → 1664 + 18 × 4 = 1736.</>],
-  [<>Cộng thêm S<sub>RDET</sub> với FAT32</>, "FAT32 không có vùng RDET riêng; RDET là cluster 2 trong vùng dữ liệu. Vì vậy RDET và Data cùng bắt đầu ở 1664."],
-  ["Coi entry phụ hoặc nhãn volume là tập tin", <>Thuộc tính <code>0F</code> = entry phụ (một phần tên dài), <code>08</code> = nhãn volume. Cả hai đều không xuất hiện trong cây.</>],
-  ["Đưa entry đã xóa vào cây", <>Byte đầu <code>E5</code>: bỏ qua cả entry chính lẫn các entry phụ đi kèm (ở đây là “System Volume Information”).</>],
-  ["Đọc nhầm byte 0C là thuộc tính", <>Thuộc tính ở <code>0B</code>. Byte <code>0C</code> (đề có giá trị <code>18</code>) là vùng dành riêng: bỏ qua.</>],
-  ["Ghép tên dài sai thứ tự", <>Ghép theo số thứ tự <code>01</code>, <code>02</code>…, không theo thứ tự từ trên xuống. Entry <code>01</code> nằm sát entry chính. “Ext S” + “uperbl” + “oc” + “k.tpl”.</>],
-  ["Lấy kích thước thư mục từ entry", "Entry thư mục luôn ghi kích thước 0. Số sector của thư mục lấy từ chuỗi FAT."],
-  ["Liệt kê sector theo kích thước thay vì theo cluster", "Tập tin chiếm trọn cluster: 2321 B vẫn chiếm 2 cluster = 8 sector (1728–1735), dù chỉ 5 sector đầu có dữ liệu."],
-  ["Chỉ ghi FAT1, quên FAT2", "Volume có 2 bảng FAT; khi FAT đổi thì cả sector 38 (FAT1) và 851 (FAT2) cùng đổi."],
-  ["Nghĩ MOVE làm đổi FAT và dữ liệu", <>MOVE trong cùng volume chỉ ghi entry ở thư mục đích và đánh <code>E5</code> ở thư mục nguồn.</>],
-  ["Nghĩ DELETE xóa nội dung", <>Xóa chỉ đánh <code>E5</code> và đưa phần tử FAT về 0. Vùng dữ liệu không đổi.</>],
-  ["COPY lấy cluster tùy ý", "Lấy các phần tử FAT trống đầu tiên (11, 12), không phải nối sau cluster lớn nhất đang dùng (25)."],
-  ["Cố gắn chuỗi FAT “mồ côi” vào tập tin", "Cluster 3, 4, 5, 10 đang là EOF nhưng không có entry sống nào trỏ tới. Chúng thuộc thư mục đã xóa hoặc phần không chụp; bỏ qua."],
-  ["MBR: dùng CHS, quên × 512, quên byte 80", <>Dùng sector bắt đầu (+8) và số sector (+C) dạng LBA. Dung lượng = số sector × 512. Byte trạng thái <code>80</code> mới là phân vùng khởi động.</>],
+  ["Đọc xuôi số nhiều byte", <><code>26 00</code> là 38 (đọc ngược), không phải 9728.</>],
+  ["Quên cluster bắt đầu từ 2", <>Cluster k = 1664 + (k − <b>2</b>) × 4.</>],
+  ["Cộng thêm vùng RDET riêng", "FAT32 không có. RDET nằm trong vùng Data, ở cluster 2."],
+  ["Coi mảnh tên dài là file", <>Entry có byte <code>0B</code> = <code>0F</code> chỉ là một phần của tên.</>],
+  ["Đưa file đã xóa vào cây", <>Byte đầu <code>E5</code> = đã xóa. Bỏ qua.</>],
+  ["Nhầm byte 0C là thuộc tính", <>Thuộc tính ở <code>0B</code>.</>],
+  ["Lấy kích thước thư mục từ entry", "Luôn là 0. Xem chuỗi FAT."],
+  ["Đếm sector theo kích thước file", "Đếm theo cluster: 2321 byte vẫn chiếm 2 cluster = 8 sector."],
+  ["Quên FAT2", "Sửa FAT là sửa cả sector 38 và 851."],
+  ["Nghĩ XÓA làm mất nội dung", "Nội dung vẫn còn. Chỉ entry và ô FAT bị đổi."],
+  ["MBR: quên × 512", "Dung lượng = số sector × 512 byte."],
 ];
 
 export function Pitfalls() {

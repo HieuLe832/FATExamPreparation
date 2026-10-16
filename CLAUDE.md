@@ -78,10 +78,13 @@ python3 scripts/crop_slides.py /tmp/slides client/public/slides
   are added to `GROUPS` in `App.jsx`.
 - Several related slides go in a `<SlideStrip>` (thumbnail strip, click to zoom); a single key slide is a
   plain `<Slide>`. Don't stack many full-size slides.
-- Each lesson goes: slide crop → explanation → `<Example>` worked step by step → "Tự làm" for the rest →
-  collapsed `<Answer>`. Answers stay collapsed so the learner tries first.
-- Write for a beginner: define every term the first time it appears (and add it to `Glossary.jsx`), show
-  the arithmetic (e.g. `0x26 = 2 × 16 + 6 = 38`), and say where a byte is on the screenshot (row, column).
+- Each lesson goes: `<Goal>` (1 line) → slides → `<KeyPoints>` "Cần nhớ" (at most 4 short rules or a small
+  table) → hex dump → `<Example>` (short numbered steps) → `<Try>` (1 line) → collapsed `<Answer>`.
+- **Keep it short. The user rejected a wordy version as hard to understand.** No paragraphs longer than 2
+  sentences, no meta text ("trang này dạy…"), no explanation the exercise doesn't need. Answers are a table
+  plus at most one line. A lesson page should stay under ~180 words outside hex dumps, slides and answers.
+- Write for a beginner: plain words, show the arithmetic (`26 = 2 × 16 + 6 = 38`), say where a byte is
+  (row, column). New terms go in `Glossary.jsx` with a one-line meaning.
 - Commit messages: `type: summary` (e.g. `feat: add FAT chain lesson`, `fix: correct cluster 11 sector`).
 
 ## Known pitfalls
