@@ -107,10 +107,6 @@ function HexDumpView({ d }) {
         {cur.calc && <div className="calc" dangerouslySetInnerHTML={{ __html: cur.calc }} />}
         {cur.ent && <div className="ent" dangerouslySetInnerHTML={{ __html: cur.ent }} />}
       </div>
-      <details className="orig">
-        <summary>Ảnh gốc trong đề</summary>
-        <img src={d.original} alt={`Ảnh hex dump trong đề: ${d.title}`} loading="lazy" />
-      </details>
     </div>
   );
 }

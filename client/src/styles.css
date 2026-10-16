@@ -117,21 +117,6 @@ section > *, .prose > *, details.answer > .body > * { min-width: 0; }
 .scope .skip h3 { color: var(--muted); }
 .scope .skip li { color: var(--muted); }
 
-/* ---------- slides ---------- */
-figure.slide { margin: 0; display: grid; gap: 8px; max-width: 720px; }
-figure.slide.narrow { max-width: 480px; }
-.slide-zoom { display: block; padding: 0; border: 1px solid var(--line); border-radius: 10px; background: #fff; cursor: zoom-in; overflow: hidden; box-shadow: var(--shadow); }
-.slide-zoom img { display: block; width: 100%; height: auto; }
-figcaption { font-size: var(--step--1); color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
-figcaption > span:first-child { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
-.zoom-hint { margin-left: auto; font-size: 0.75rem; }
-.slides-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
-.lightbox { border: 0; padding: 0; background: transparent; max-width: min(1200px, 96vw); max-height: 94vh; overflow: visible; }
-.lightbox::backdrop { background: rgb(8 12 18 / 0.78); }
-.lightbox img { display: block; max-height: 86vh; width: auto; margin: 0 auto; border-radius: 8px; background: #fff; }
-.lightbox form { display: flex; justify-content: center; margin-top: 10px; }
-.lightbox-close { font: inherit; padding: 6px 16px; border-radius: 8px; border: 0; background: var(--surface); color: var(--ink); cursor: pointer; }
-
 /* ---------- learning callouts: worked example, try it, answer ---------- */
 .example, .try { border-radius: 12px; padding: 16px 20px; max-width: 76ch; display: grid; gap: 10px; min-width: 0; }
 .example { background: var(--ok-soft); }
@@ -273,20 +258,10 @@ dl.glossary dd { margin: 2px 0 0; font-size: 0.94rem; }
   .tools { grid-template-columns: minmax(0, 1fr); }
   .pager { grid-template-columns: minmax(0, 1fr); }
   .pager-link.primary { grid-column: 1; grid-row: 1; }
-  .zoom-hint { display: none; }
   details.answer > summary::after { display: none; }
 }
 
-/* ---------- slide sizing, slide strips, roadmap (second pass) ---------- */
-figure.slide { max-width: 620px; }
-figure.slide.narrow { max-width: 440px; }
-.slide-strip-wrap { display: grid; gap: 8px; min-width: 0; }
-.strip-label { margin: 0; font-size: var(--step--1); color: var(--muted); }
-.slides-row { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(240px, 300px); overflow-x: auto;
-  scroll-snap-type: x mandatory; gap: 14px; padding: 2px 2px 10px; }
-.slides-row figure.slide { max-width: none; scroll-snap-align: start; }
-.slides-row .slide-zoom img { height: 170px; object-fit: contain; background: #fff; }
-.slides-row .zoom-hint { display: none; }
+/* ---------- roadmap ---------- */
 .roadmap { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(4, auto); grid-auto-flow: column; gap: 10px 14px; }
 .roadmap a { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); text-decoration: none; height: 100%; }
 .roadmap a:hover { border-color: var(--accent); }
@@ -308,3 +283,40 @@ figure.slide.narrow { max-width: 440px; }
 .keypoints p { margin: 0; }
 .keypoints .tablewrap { margin-inline: -4px; }
 .note { margin: 0; color: var(--muted); font-size: 0.92rem; }
+
+/* ---------- divide and conquer: sub-steps, checks, disk map (fourth pass) ---------- */
+.substeps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; counter-reset: sub; max-width: 80ch; }
+.substep { counter-increment: sub; position: relative; padding: 0 0 26px 48px; display: grid; gap: 10px; min-width: 0; }
+.substep::before { content: counter(sub); position: absolute; left: 0; top: -2px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--accent); color: var(--accent-ink); font-family: var(--font-mono); font-weight: 700; font-size: 0.9rem; }
+.substep::after { content: ""; position: absolute; left: 15px; top: 34px; bottom: 4px; width: 2px; background: var(--line); }
+.substep:last-child { padding-bottom: 4px; }
+.substep:last-child::after { display: none; }
+.substep h3 { margin: 2px 0 0; font-size: 1.1rem; }
+.substep-body { display: grid; gap: 10px; min-width: 0; }
+.substep-body > p, .substep-body > ul { margin: 0; }
+.substep-body > ul { padding-left: 1.2em; display: grid; gap: 6px; }
+.check { border-radius: 10px; background: var(--try-soft); justify-self: start; max-width: 100%; }
+.check > summary { cursor: pointer; list-style: none; padding: 8px 14px; display: flex; gap: 10px; align-items: baseline; font-weight: 500; }
+.check > summary::-webkit-details-marker { display: none; }
+.check > summary > span { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--try); }
+.check > summary::after { content: "bấm xem đáp án"; margin-left: 8px; font-size: 0.78rem; color: var(--muted); }
+.check[open] > summary::after { content: ""; }
+.check-answer { padding: 0 14px 10px; color: var(--ok); font-weight: 600; }
+.check-answer code { background: var(--surface); }
+.diskmap { display: grid; grid-template-columns: repeat(12, minmax(58px, 1fr)); gap: 4px; font-family: var(--font-mono); font-size: 0.74rem; min-width: 700px; }
+.dm-cell { border-radius: 8px; padding: 6px 4px 8px; display: grid; gap: 2px; text-align: center; background: var(--surface-2); color: var(--muted); }
+.dm-cell b { color: var(--ink); font-weight: 600; font-size: 0.72rem; overflow-wrap: anywhere; }
+.dm-k { font-size: 0.68rem; }
+.dm-next { font-weight: 700; }
+.dm-cell.dir { background: var(--f-name); }
+.dm-cell.hello { background: var(--f-size); }
+.dm-cell.doc { background: var(--f-attr); }
+.dm-cell.note { background: var(--f-clus); outline: 2px solid var(--ok); outline-offset: -2px; }
+.dm-cell.note .dm-next { color: var(--ok); }
+.mapping td:first-child { font-weight: 600; }
+.roadmap { grid-template-rows: repeat(5, auto); }
+.toc { display: grid; gap: 0; max-width: 360px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 14px; font-family: var(--font-mono); font-size: 0.88rem; }
+.toc > div { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px dotted var(--line); }
+.toc > div:last-child { border-bottom: 0; }
+.toc > div > span:last-child { color: var(--accent); }

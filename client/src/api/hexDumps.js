@@ -8,6 +8,6 @@ export async function fetchHexDump(id, signal) {
   const d = await res.json();
   return {
     title: d.title, note: d.note, kind: d.kind, base: d.baseOffset, pick: d.pickOffset,
-    original: d.originalImage, hex: d.rows,
+    hex: d.rows,
   };
 }

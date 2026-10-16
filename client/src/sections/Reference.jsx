@@ -2,14 +2,14 @@ import { SectionHead, Table } from "../components/Study.jsx";
 
 const PITFALLS = [
   ["Đọc xuôi số nhiều byte", <><code>26 00</code> là 38 (đọc ngược), không phải 9728.</>],
-  ["Quên cluster bắt đầu từ 2", <>Cluster k = 1664 + (k − <b>2</b>) × 4.</>],
+  ["Quên cluster bắt đầu từ 2", <>Cluster k = Data + (k − <b>2</b>) × S<sub>C</sub>.</>],
   ["Cộng thêm vùng RDET riêng", "FAT32 không có. RDET nằm trong vùng Data, ở cluster 2."],
   ["Coi mảnh tên dài là file", <>Entry có byte <code>0B</code> = <code>0F</code> chỉ là một phần của tên.</>],
   ["Đưa file đã xóa vào cây", <>Byte đầu <code>E5</code> = đã xóa. Bỏ qua.</>],
   ["Nhầm byte 0C là thuộc tính", <>Thuộc tính ở <code>0B</code>.</>],
   ["Lấy kích thước thư mục từ entry", "Luôn là 0. Xem chuỗi FAT."],
-  ["Đếm sector theo kích thước file", "Đếm theo cluster: 2321 byte vẫn chiếm 2 cluster = 8 sector."],
-  ["Quên FAT2", "Sửa FAT là sửa cả sector 38 và 851."],
+  ["Đếm sector theo kích thước file", "Đếm theo cluster: file 1280 byte vẫn chiếm trọn 2 cluster."],
+  ["Quên FAT2", "Sửa FAT là sửa cả 2 bảng FAT."],
   ["Nghĩ XÓA làm mất nội dung", "Nội dung vẫn còn. Chỉ entry và ô FAT bị đổi."],
   ["MBR: quên × 512", "Dung lượng = số sector × 512 byte."],
 ];

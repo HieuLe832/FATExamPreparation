@@ -1,6 +1,6 @@
 namespace FatGuide.Api.Models;
 
-/// <summary>A hex dump transcribed from one screenshot in Baitap_HTTT.pdf.</summary>
+/// <summary>One hex dump of the mini practice disk used by the lessons.</summary>
 public sealed class HexDump
 {
     /// <summary>Stable key used by the frontend, e.g. "rdet".</summary>
@@ -19,9 +19,6 @@ public sealed class HexDump
 
     /// <summary>Absolute offset of the byte selected when the dump first renders.</summary>
     public required long PickOffset { get; init; }
-
-    /// <summary>Path of the original screenshot, relative to the frontend's public folder.</summary>
-    public required string OriginalImage { get; init; }
 
     /// <summary>16 space-separated hex bytes per row.</summary>
     public required IReadOnlyList<string> Rows { get; init; }

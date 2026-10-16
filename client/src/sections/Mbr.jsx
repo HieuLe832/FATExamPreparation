@@ -1,57 +1,43 @@
 import HexDump from "../components/HexDump.jsx";
-import { Answer, Example, Goal, KeyPoints, SectionHead, Slide, SlideStrip, Table, Try } from "../components/Study.jsx";
+import { Answer, Check, Goal, SectionHead, SubStep, SubSteps, Table } from "../components/Study.jsx";
 
 const n = { cls: "n" };
-const mono = (s) => <span className="mono">{s}</span>;
 
 export default function Mbr() {
   return (
     <section id="mbr">
-      <SectionHead tag="Bài tập 1" title="MBR và phân vùng" />
-      <Goal>Đọc ra 4 phân vùng của ổ cứng.</Goal>
-      <SlideStrip>
-        <Slide n={39} caption="Master Boot Record"
-          alt="Trích slide: cấu trúc Master Boot Record, bảng phân vùng tại 1BE, chữ ký 55AA, các TYPE-ID" />
-        <Slide n={38} caption="tổ chức hệ thống tập tin trên đĩa"
-          alt="Trích slide: MBR ở sector logic 0, 512 byte; phân vùng primary và extended, tối đa 4 phân vùng" />
-      </SlideStrip>
-
-      <KeyPoints>
-        <p>Bảng phân vùng bắt đầu ở <code>1BE</code>: 4 dòng, mỗi dòng 16 byte (<code>1BE</code>, <code>1CE</code>, <code>1DE</code>, <code>1EE</code>). Mỗi dòng chỉ cần đọc 4 chỗ:</p>
-        <Table
-          head={["Byte", "Nghĩa"]}
-          rows={[
-            [mono("+0"), <><code>80</code> = phân vùng khởi động, <code>00</code> = không</>],
-            [mono("+4"), <>Loại: <code>07</code> NTFS · <code>83</code> Linux · <code>0F</code> Extended · <code>DE</code> Dell (FAT)</>],
-            [mono("+8"), "Sector bắt đầu (4 byte, đọc ngược)"],
-            [mono("+C"), "Số sector (4 byte, đọc ngược). Dung lượng = số sector × 512"],
-          ]}
-        />
-      </KeyPoints>
-
+      <SectionHead tag="Đề mini · phần 1" title="MBR và phân vùng" />
+      <Goal>Ổ có mấy phân vùng, loại gì, dung lượng bao nhiêu, phân vùng nào khởi động.</Goal>
       <HexDump id="mbr" />
-
-      <Example title="Phân vùng 1 (dòng 1BE)">
-        <p className="step">00 01 01 00 DE FE 3F 05 3F 00 00 00 47 78 01 00</p>
-        <ol>
-          <li>+0 = <code>00</code> → không khởi động. +4 = <code>DE</code> → Dell (FAT).</li>
-          <li>+8 = <code>3F 00 00 00</code> → <code>3F</code> = sector 63.</li>
-          <li>+C = <code>47 78 01 00</code> → <code>17847</code> = 96 327 sector.</li>
-          <li>96 327 × 512 ÷ 1024 ÷ 1024 ≈ <b>47,03 MB</b>.</li>
-        </ol>
-      </Example>
-      <Try><p>Làm 3 phân vùng còn lại (dòng <code>1CE</code>, <code>1DE</code>, <code>1EE</code>). Số lớn thì chia 1024 ba lần để ra GB.</p></Try>
-      <Answer label="Xem đáp án bài 1">
+      <SubSteps>
+        <SubStep title="Tìm bảng phân vùng">
+          <p>MBR là sector 0 của ổ cứng. Bảng phân vùng có 4 dòng, mỗi dòng 16 byte, bắt đầu ở <code>1BE</code>, <code>1CE</code>, <code>1DE</code>, <code>1EE</code>. Dòng toàn <code>00</code> = không có phân vùng.</p>
+          <Check q="Đề mini có mấy phân vùng?">2 (dòng 1DE và 1EE toàn 00)</Check>
+        </SubStep>
+        <SubStep title="Khởi động và loại">
+          <Table head={["Byte", "Nghĩa"]} rows={[
+            [<code>+0</code>, <><code>80</code> = phân vùng khởi động, <code>00</code> = không</>],
+            [<code>+4</code>, <>Loại: <code>07</code> NTFS · <code>83</code> Linux · <code>0B</code>/<code>0C</code> FAT32 · <code>0F</code> Extended</>],
+          ]} />
+          <Check q="Phân vùng nào khởi động?">Phân vùng 1 (byte 1BE = 80), loại 07 = NTFS</Check>
+        </SubStep>
+        <SubStep title="Vị trí và dung lượng">
+          <Table head={["Byte", "Nghĩa"]} rows={[
+            [<code>+8</code>, "Sector bắt đầu (4 byte, đọc ngược)"],
+            [<code>+C</code>, "Số sector (4 byte, đọc ngược)"],
+          ]} />
+          <p>Dung lượng = số sector × 512. Phân vùng 1: <code>00 00 20 00</code> → <code>00200000</code> = 2 097 152 sector × 512 = <b>1 GB</b>.</p>
+          <Check q="Phân vùng 2 bao nhiêu?"><code>00 00 10 00</code> → 1 048 576 sector × 512 = 512 MB</Check>
+        </SubStep>
+      </SubSteps>
+      <Answer label="Ghép lại: đáp án phần 1">
         <Table
           head={["#", "Khởi động", "Loại", { label: "Sector đầu", ...n }, { label: "Số sector", ...n }, { label: "Dung lượng", ...n }]}
           rows={[
-            ["1", "không", "DE · Dell (FAT)", "63", "96 327", "≈ 47,03 MB"],
-            [<span className="hi">2</span>, <span className="hi">có (80)</span>, "07 · NTFS", "96 390", "36 869 175", "≈ 17,58 GB"],
-            ["3", "không", "83 · Linux", "36 965 565", "14 346 045", "≈ 6,84 GB"],
-            ["4", "không", "0F · Extended", "51 311 610", "62 958 735", "≈ 30,02 GB"],
+            [<span className="hi">1</span>, <span className="hi">có (80)</span>, "07 · NTFS", "2 048", "2 097 152", "1 GB"],
+            ["2", "không", "83 · Linux", "2 099 200", "1 048 576", "512 MB"],
           ]}
         />
-        <p><b>4 phân vùng.</b> Phân vùng khởi động là <b>số 2 (NTFS)</b>.</p>
       </Answer>
     </section>
   );

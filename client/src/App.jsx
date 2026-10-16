@@ -1,27 +1,31 @@
 import { useCallback, useEffect, useState } from "react";
 import { Hero, HexBasics } from "./sections/Intro.jsx";
-import Foundations from "./sections/Foundations.jsx";
+import WhatIsFat from "./sections/WhatIsFat.jsx";
+import MiniExercise from "./sections/MiniExercise.jsx";
 import Glossary from "./sections/Glossary.jsx";
 import Mbr from "./sections/Mbr.jsx";
 import { Boot, Directories, Fat } from "./sections/Volume.jsx";
 import Operations from "./sections/Operations.jsx";
+import RealExercise from "./sections/RealExercise.jsx";
 import { CheatSheet, Pitfalls } from "./sections/Reference.jsx";
 
 // One lesson is shown at a time; the URL hash (#mbr, #boot, …) says which.
 const GROUPS = [
   { name: "Khởi động", steps: [
     { id: "pham-vi", label: "Bắt đầu", Page: Hero },
-    { id: "co-ban", label: "Kiến thức nền", Page: Foundations },
-    { id: "hex", label: "Đọc hex dump", Page: HexBasics },
+    { id: "fat-la-gi", label: "FAT là gì?", Page: WhatIsFat },
+    { id: "hex", label: "Byte và hex", Page: HexBasics },
   ] },
-  { name: "Bài tập 1", steps: [
-    { id: "mbr", label: "MBR và phân vùng", Page: Mbr },
-  ] },
-  { name: "Bài tập 2", steps: [
+  { name: "Đề mini", steps: [
+    { id: "de-mini", label: "Đề mini hỏi gì", Page: MiniExercise },
+    { id: "mbr", label: "1 · MBR", Page: Mbr },
     { id: "boot", label: "2a · Boot sector", Page: Boot },
     { id: "fat", label: "2b · Bảng FAT", Page: Fat },
     { id: "dir", label: "2b · Thư mục và cây", Page: Directories },
     { id: "ops", label: "2c–e · Move, Xóa, Copy", Page: Operations },
+  ] },
+  { name: "Đề thật", steps: [
+    { id: "de-that", label: "Làm Baitap_HTTT", Page: RealExercise },
   ] },
   { name: "Tra cứu", steps: [
     { id: "pitfalls", label: "Lỗi hay gặp", Page: Pitfalls },

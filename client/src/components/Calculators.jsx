@@ -32,12 +32,12 @@ function clusterResult(dText, sText, kText) {
 }
 
 export default function Calculators() {
-  const [leIn, setLeIn] = useState("5B 5F 06 00");
-  const [baseIn, setBaseIn] = useState("32D");
-  const [offIn, setOffIn] = useState("D9000");
-  const [data, setData] = useState("1664");
-  const [sc, setSc] = useState("4");
-  const [k, setK] = useState("20");
+  const [leIn, setLeIn] = useState("00 0A 00 00");
+  const [baseIn, setBaseIn] = useState("A00");
+  const [offIn, setOffIn] = useState("2000");
+  const [data, setData] = useState("10");
+  const [sc, setSc] = useState("2");
+  const [k, setK] = useState("7");
   return (
     <div className="tools">
       <div className="tool">

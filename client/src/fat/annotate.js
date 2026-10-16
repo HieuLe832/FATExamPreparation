@@ -1,6 +1,6 @@
 // Splits a hex dump into labelled fields. Each segment's `calc` and `ent` are small HTML
 // strings built only from the dump bytes; text taken from bytes goes through esc().
-import { DATA_START, SECTORS_PER_CLUSTER } from "./dumps.js";
+import { DATA_START, FAT_START_OFFSET, SECTORS_PER_CLUSTER } from "./dumps.js";
 
 export const h2 = (n) => n.toString(16).toUpperCase().padStart(2, "0");
 export const hx = (n, w = 1) => "0x" + n.toString(16).toUpperCase().padStart(w, "0");
@@ -79,12 +79,10 @@ function annotateBoot(b) {
   });
 }
 
-const FAT_START = 0x4c00; // byte offset of FAT1 on the volume (sector 38)
-
 function annotateFat(b, base) {
   const s = [];
   for (let i = 0; i + 4 <= b.length; i += 4) {
-    const k = (base - FAT_START + i) / 4, v = le(b, i, 4) & 0x0fffffff;
+    const k = (base - FAT_START_OFFSET + i) / 4, v = le(b, i, 4) & 0x0fffffff;
     let cls, mean;
     if (k < 2) { cls = "k-mute"; mean = `phần tử ${k} không dùng (cluster đánh số từ 2)`; }
     else if (v === 0) { cls = "k-free"; mean = "<b>trống</b>"; }

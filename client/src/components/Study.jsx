@@ -1,30 +1,49 @@
-// Small building blocks shared by every lesson section.
-import { useRef } from "react";
+// Small building blocks shared by every lesson.
 
-/** A cropped lecture slide; click to see it full size. */
-export function Slide({ n, alt, caption, narrow }) {
-  const dialog = useRef(null);
-  const src = `slides/slide-${n}.jpg`;
+/** One line: what the learner can do after this lesson. */
+export function Goal({ children }) {
+  return <p className="goal"><span>Mục tiêu</span>{children}</p>;
+}
+
+/** The few rules to remember, as short bullets or a small table. */
+export function KeyPoints({ title = "Cần nhớ", children }) {
   return (
-    <figure className={"slide" + (narrow ? " narrow" : "")}>
-      <button type="button" className="slide-zoom" onClick={() => dialog.current?.showModal()} aria-label={`Phóng to slide: ${caption}`}>
-        <img src={src} alt={alt} loading="lazy" />
-      </button>
-      <figcaption><span>Trích bài giảng</span> {caption}<span className="zoom-hint">Bấm để phóng to</span></figcaption>
-      <dialog ref={dialog} className="lightbox" onClick={(e) => e.target === e.currentTarget && dialog.current.close()}>
-        <img src={src} alt={alt} />
-        <form method="dialog"><button type="submit" className="lightbox-close">Đóng</button></form>
-      </dialog>
-    </figure>
+    <div className="keypoints">
+      <strong>{title}</strong>
+      {children}
+    </div>
   );
 }
 
-/** Several related slides as a scrollable strip of thumbnails. */
-export function SlideStrip({ children }) {
+/** Ordered small steps: the lesson split into pieces (divide and conquer). */
+export function SubSteps({ children }) {
+  return <ol className="substeps">{children}</ol>;
+}
+
+export function SubStep({ title, children }) {
   return (
-    <div className="slide-strip-wrap">
-      <p className="strip-label">Slide bài giảng liên quan · bấm vào slide để phóng to</p>
-      <div className="slides-row">{children}</div>
+    <li className="substep">
+      <h3>{title}</h3>
+      <div className="substep-body">{children}</div>
+    </li>
+  );
+}
+
+/** A tiny question at the end of a step; the answer stays hidden until clicked. */
+export function Check({ q, children }) {
+  return (
+    <details className="check">
+      <summary><span>Thử</span>{q}</summary>
+      <div className="check-answer">{children}</div>
+    </details>
+  );
+}
+
+export function Example({ title, children }) {
+  return (
+    <div className="example">
+      <strong>Làm mẫu · {title}</strong>
+      {children}
     </div>
   );
 }
@@ -73,38 +92,30 @@ export function Table({ head, rows, wrapStyle }) {
   );
 }
 
-/** The four-region "what changed" table used by questions c, d and e. */
+/** The four-region "what changed" table used by the move / delete / copy questions. */
 export function ImpactTable({ fat, rdet, sdet, data }) {
   const row = (name, change) => [name, change ? "" : "x", change || ""];
   return (
     <Table
-      head={["Vùng", { label: "Không thay đổi", cls: "c" }, "Thay đổi"]}
+      head={["Vùng", { label: "Không đổi", cls: "c" }, "Thay đổi (sector)"]}
       rows={[row("FAT", fat), row("RDET", rdet), row("SDET", sdet), row("Data", data)]}
     />
   );
 }
 
-/** A fully worked example the learner reads before trying the rest alone. */
-export function Example({ title, children }) {
+/** Clusters of the mini disk as a strip of boxes, coloured by owner, with each box's FAT value under it. */
+export function DiskMap({ cells }) {
   return (
-    <div className="example">
-      <strong>Làm mẫu · {title}</strong>
-      {children}
-    </div>
-  );
-}
-
-/** One line: what the learner can do after this lesson. */
-export function Goal({ children }) {
-  return <p className="goal"><span>Mục tiêu</span>{children}</p>;
-}
-
-/** The few rules to remember, as short bullets. */
-export function KeyPoints({ title = "Cần nhớ", children }) {
-  return (
-    <div className="keypoints">
-      <strong>{title}</strong>
-      {children}
+    <div className="tablewrap">
+      <div className="diskmap" role="img" aria-label="Bản đồ cluster của đĩa mini">
+        {cells.map((c) => (
+          <div key={c.k} className={"dm-cell " + (c.cls ?? "")}>
+            <span className="dm-k">{c.k}</span>
+            <b>{c.label}</b>
+            <span className="dm-next">{c.next}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
