@@ -1,7 +1,7 @@
 node_modules/
+client/dist/
 server/bin/
 server/obj/
-server/wwwroot/
 *.log
 
 # local secrets, never commit

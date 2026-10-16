@@ -1,12 +1,41 @@
-import { useMemo, useState } from "react";
-import { DUMPS, parseHex } from "../fat/dumps.js";
+import { useEffect, useMemo, useState } from "react";
+import { fetchHexDump } from "../api/hexDumps.js";
+import { parseHex } from "../fat/dumps.js";
 import { annotate, h2, hx } from "../fat/annotate.js";
 
 const COLS = Array.from({ length: 16 }, (_, c) => c);
 
-/** Clickable hex dump: each byte belongs to a field segment; selecting one explains it. */
+/** Loads one exercise dump from the backend, then renders it. */
 export default function HexDump({ id }) {
-  const d = DUMPS[id];
+  const [state, setState] = useState({ status: "loading" });
+  useEffect(() => {
+    const ctrl = new AbortController();
+    setState({ status: "loading" });
+    fetchHexDump(id, ctrl.signal)
+      .then((dump) => setState({ status: "ready", dump }))
+      .catch((err) => { if (!ctrl.signal.aborted) setState({ status: "error", message: err.message }); });
+    return () => ctrl.abort();
+  }, [id]);
+
+  if (state.status === "ready") return <HexDumpView d={state.dump} />;
+  return (
+    <div className="dump">
+      <div className="info" role={state.status === "error" ? "alert" : "status"}>
+        {state.status === "loading" ? (
+          <div className="what">Đang tải hex dump “{id}” từ backend…</div>
+        ) : (
+          <>
+            <div className="what">Không tải được hex dump “{id}” ({state.message}).</div>
+            <div className="calc">Chạy backend bằng <b>dotnet run --project server</b> rồi tải lại trang.</div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Clickable hex dump: each byte belongs to a field segment; selecting one explains it. */
+function HexDumpView({ d }) {
   const { bytes, segs, owner } = useMemo(() => {
     const bytes = parseHex(d.hex);
     const segs = annotate(d.kind, bytes, d.base);

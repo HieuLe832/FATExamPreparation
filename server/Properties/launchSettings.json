@@ -1,7 +1,9 @@
 {
   "profiles": {
-    "FatGuide": {
+    "FatGuide.Api": {
       "commandName": "Project",
+      "launchBrowser": false,
+      "launchUrl": "swagger",
       "applicationUrl": "http://localhost:5080",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

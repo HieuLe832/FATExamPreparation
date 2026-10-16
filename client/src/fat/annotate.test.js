@@ -1,8 +1,13 @@
 // Pins the transcribed dumps to the answers shown on the page. Run: npm test
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { DUMPS, parseHex, DATA_START } from "./dumps.js";
+import { readFileSync } from "node:fs";
+import { parseHex, DATA_START } from "./dumps.js";
 import { annotate, decodeEntry, le } from "./annotate.js";
+
+// The dumps are the backend's data; the decoders that read them live here.
+const json = JSON.parse(readFileSync(new URL("../../../server/Data/hex-dumps.json", import.meta.url), "utf8"));
+const DUMPS = Object.fromEntries(json.map((d) => [d.id, { kind: d.kind, base: d.baseOffset, pick: d.pickOffset, hex: d.rows }]));
 
 const bytes = (k) => parseHex(DUMPS[k].hex);
 
