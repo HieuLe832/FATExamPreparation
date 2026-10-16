@@ -42,10 +42,10 @@ Public IP có tính một khoản phí nhỏ mỗi tháng, trừ vào credit c�
 Cổng 22 (SSH) thường đã mở sẵn. Cổng 80 cần cho Caddy xin chứng chỉ, cổng 443 là HTTPS.
 
 **Đặt tên miền.** Portal → VM → bấm vào **Public IP address** → **Configuration** → ô **DNS name label**, gõ ví
-dụ `fat-api` → **Save**. Bạn nhận được tên miền dạng `fat-api.southeastasia.cloudapp.azure.com`. Từ đây gọi
-nó là `<API_DOMAIN>`.
+dụ `fat-api` → **Save**. Bạn nhận được tên miền dạng `fat-api.<vùng>.cloudapp.azure.com`; VM ở East Asia thì là
+`fat-api.eastasia.cloudapp.azure.com`. Từ đây gọi nó là `<API_DOMAIN>`.
 
-Nên đặt Public IP là **Static** (cùng trang Configuration) để IP không đổi khi VM khởi động lại.
+Public IP phải là **Static** để IP không đổi khi VM khởi động lại.
 
 ---
 
