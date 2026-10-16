@@ -1,5 +1,5 @@
 import HexDump from "../components/HexDump.jsx";
-import { Answer, SectionHead, Slide, Table, Try } from "../components/Study.jsx";
+import { Answer, Example, SectionHead, Slide, Table, Try } from "../components/Study.jsx";
 
 const n = { cls: "n" };
 
@@ -42,10 +42,21 @@ export default function Mbr() {
 
       <HexDump id="mbr" />
 
+      <Example title="Phân vùng 1 (entry tại 1BE)">
+        <p>Entry 1 là 16 byte từ <code>1BE</code> đến <code>1CD</code>. Trên ảnh hex, nó bắt đầu ở 2 byte cuối dòng <code>1B0</code>:</p>
+        <p className="step">00 01 01 00 DE FE 3F 05 3F 00 00 00 47 78 01 00</p>
+        <ol>
+          <li>Byte +0 = <code>00</code> → không phải phân vùng khởi động.</li>
+          <li>Byte +4 = <code>DE</code> → loại Dell Utility (FAT).</li>
+          <li>Byte +8..+B = <code>3F 00 00 00</code> → đảo thứ tự: <code>0000003F</code> = 63. Phân vùng bắt đầu ở sector 63.</li>
+          <li>Byte +C..+F = <code>47 78 01 00</code> → đảo: <code>00017847</code> = 96 327 sector.</li>
+          <li>Dung lượng = 96 327 × 512 = 49 319 424 byte. Chia 1024 hai lần: ≈ <b>47,03 MB</b>.</li>
+        </ol>
+      </Example>
       <Try>
         <ol>
-          <li>Với mỗi entry, đọc byte +0 (active?), +4 (loại), +8..+B (sector đầu), +C..+F (số sector).</li>
-          <li>Đổi số sector ra MB/GB: × 512 rồi chia 1024².</li>
+          <li>Làm y hệt cho 3 entry còn lại, bắt đầu ở <code>1CE</code>, <code>1DE</code>, <code>1EE</code>.</li>
+          <li>Số lớn thì chia 1024 ba lần để ra GB.</li>
           <li>Kiểm tra: sector đầu phân vùng sau = sector đầu phân vùng trước + số sector của nó.</li>
         </ol>
       </Try>

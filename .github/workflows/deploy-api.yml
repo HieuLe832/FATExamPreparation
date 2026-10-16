@@ -1,0 +1,34 @@
+name: Deploy API to Azure
+
+on:
+  push:
+    branches: [main]
+    paths: ["server/**", "client/src/fat/**", ".github/workflows/deploy-api.yml"]
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: fat-guide-api # change to your Azure Web App name
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The decoder tests check server/Data/hex-dumps.json against the published answers.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci && npm test
+        working-directory: client
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - run: dotnet publish server/FatGuide.Api.csproj -c Release -o publish
+
+      - uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: publish

@@ -9,6 +9,14 @@ function leResult(text) {
   return <>đảo → {hx(v, b.length * 2)} = <b>{num(v)}</b></>;
 }
 
+function baseResult(text) {
+  const v = text.trim().replace(/^0x/i, "").replace(/h$/i, "");
+  if (!/^[0-9a-fA-F]{1,8}$/.test(v)) return "Nhập một số hex, ví dụ: 32D";
+  const n = parseInt(v, 16);
+  const bin = n.toString(2).padStart(Math.ceil(n.toString(2).length / 4) * 4, "0").replace(/(.{4})(?=.)/g, "$1 ");
+  return <>{hx(n)} = <b>{num(n)}</b> · nhị phân {bin}</>;
+}
+
 function offsetResult(text) {
   const v = text.trim().replace(/^0x/i, "");
   if (!/^[0-9a-fA-F]{1,10}$/.test(v)) return "Nhập offset hex, ví dụ: D9000";
@@ -25,6 +33,7 @@ function clusterResult(dText, sText, kText) {
 
 export default function Calculators() {
   const [leIn, setLeIn] = useState("5B 5F 06 00");
+  const [baseIn, setBaseIn] = useState("32D");
   const [offIn, setOffIn] = useState("D9000");
   const [data, setData] = useState("1664");
   const [sc, setSc] = useState("4");
@@ -35,6 +44,11 @@ export default function Calculators() {
         <label htmlFor="le-in">Byte little-endian → số</label>
         <input id="le-in" value={leIn} onChange={(e) => setLeIn(e.target.value)} spellCheck={false} autoComplete="off" />
         <output htmlFor="le-in">{leResult(leIn)}</output>
+      </div>
+      <div className="tool">
+        <label htmlFor="base-in">Hex → thập phân → nhị phân</label>
+        <input id="base-in" value={baseIn} onChange={(e) => setBaseIn(e.target.value)} spellCheck={false} autoComplete="off" />
+        <output htmlFor="base-in">{baseResult(baseIn)}</output>
       </div>
       <div className="tool">
         <label htmlFor="off-in">Offset (hex) → sector</label>

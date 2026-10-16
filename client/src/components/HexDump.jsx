@@ -8,6 +8,7 @@ const COLS = Array.from({ length: 16 }, (_, c) => c);
 /** Loads one exercise dump from the backend, then renders it. */
 export default function HexDump({ id }) {
   const [state, setState] = useState({ status: "loading" });
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     const ctrl = new AbortController();
     setState({ status: "loading" });
@@ -15,7 +16,7 @@ export default function HexDump({ id }) {
       .then((dump) => setState({ status: "ready", dump }))
       .catch((err) => { if (!ctrl.signal.aborted) setState({ status: "error", message: err.message }); });
     return () => ctrl.abort();
-  }, [id]);
+  }, [id, attempt]);
 
   if (state.status === "ready") return <HexDumpView d={state.dump} />;
   return (
@@ -25,8 +26,13 @@ export default function HexDump({ id }) {
           <div className="what">Đang tải hex dump “{id}” từ backend…</div>
         ) : (
           <>
-            <div className="what">Không tải được hex dump “{id}” ({state.message}).</div>
-            <div className="calc">Chạy backend bằng <b>dotnet run --project server</b> rồi tải lại trang.</div>
+            <div className="what">Chưa tải được hex dump “{id}” ({state.message}).</div>
+            <div className="calc">
+              {import.meta.env.DEV
+                ? <>Chạy backend bằng <b>dotnet run --project server</b> rồi bấm thử lại.</>
+                : "Máy chủ có thể đang khởi động sau một lúc không ai dùng. Đợi khoảng 20 giây rồi bấm thử lại."}
+            </div>
+            <button type="button" className="retry" onClick={() => setAttempt((n) => n + 1)}>Thử lại</button>
           </>
         )}
       </div>

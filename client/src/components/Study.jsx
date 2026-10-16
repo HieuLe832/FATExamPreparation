@@ -63,3 +63,13 @@ export function ImpactTable({ fat, rdet, sdet, data }) {
     />
   );
 }
+
+/** A fully worked example the learner reads before trying the rest alone. */
+export function Example({ title, children }) {
+  return (
+    <div className="example">
+      <strong>Làm mẫu · {title}</strong>
+      {children}
+    </div>
+  );
+}

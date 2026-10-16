@@ -1,5 +1,5 @@
 import HexDump from "../components/HexDump.jsx";
-import { Answer, SectionHead, Slide, Table, Try } from "../components/Study.jsx";
+import { Answer, Example, SectionHead, Slide, Table, Try } from "../components/Study.jsx";
 
 const mono = (s) => <span className="mono">{s}</span>;
 const n = (label) => ({ label, cls: "n" });
@@ -32,11 +32,22 @@ export function Boot() {
 
       <HexDump id="boot" />
 
+      <Example title="Đọc S_B ở offset 0E">
+        <ol>
+          <li>Bảng slide ghi S<sub>B</sub> ở offset <code>E</code>, dài 2 byte.</li>
+          <li>
+            Tìm trên ảnh: dòng <code>00000000</code>, cột <code>E</code> và <code>F</code> là <code>26 00</code>.
+          </li>
+          <li>Đảo thứ tự byte: <code>00 26</code> → <code>0x0026</code>.</li>
+          <li>Đổi ra thập phân: 2 × 16 + 6 = <b>38</b>. Vùng Boot sector dài 38 sector, nên bảng FAT1 bắt đầu ở sector 38.</li>
+        </ol>
+        <p>Byte ở cột <code>D</code> ngay cạnh đó là <code>04</code>: chỉ 1 byte nên không cần đảo, S<sub>C</sub> = 4.</p>
+      </Example>
       <Try>
         <p>
-          Đọc các offset <code>0B</code>, <code>0D</code>, <code>0E</code>, <code>10</code>, <code>20</code>, <code>24</code>,{" "}
-          <code>2C</code>, <code>52</code>, rồi điền bảng 10 dòng của câu a bằng công thức trên. Đối chiếu: sector bạn tính
-          cho RDET phải trùng một trong các sector đề cho.
+          Đọc tiếp các offset <code>0B</code>, <code>10</code>, <code>20</code>, <code>24</code>, <code>2C</code>,{" "}
+          <code>52</code> theo đúng cách trên, rồi điền bảng 10 dòng của câu a bằng các công thức. Đối chiếu: sector bạn
+          tính cho RDET phải trùng một trong các sector đề cho.
         </p>
       </Try>
       <Answer label="Xem đáp án câu a">
@@ -98,10 +109,19 @@ export function Fat() {
 
       <HexDump id="fat" />
 
+      <Example title="Đi theo chuỗi bắt đầu từ cluster 6">
+        <ol>
+          <li>Phần tử 6 nằm ở byte 6 × 4 = 24 = <code>0x18</code>, tức dòng <code>4C10</code>, cột 8 đến B: <code>07 00 00 00</code>.</li>
+          <li>Đảo thứ tự: <code>00000007</code> = 7. Vậy sau cluster 6 là cluster 7.</li>
+          <li>Phần tử 7 ở byte <code>0x1C</code>: <code>08 00 00 00</code> → 8. Phần tử 8 ở byte <code>0x20</code>: <code>09 00 00 00</code> → 9.</li>
+          <li>Phần tử 9 ở byte <code>0x24</code>: <code>FF FF FF 0F</code> → <code>0FFFFFFF</code> = EOF. Dừng.</li>
+        </ol>
+        <p>Chuỗi: <b>6 → 7 → 8 → 9 → hết</b>, tức 4 cluster.</p>
+      </Example>
       <Try>
         <p>
-          Bắt đầu từ cluster 6, đi theo chuỗi đến EOF. Làm tương tự với 18, 20, 21, 23, 25. Cluster trống đầu tiên là
-          cluster nào? Bạn sẽ cần nó ở câu e.
+          Làm tương tự với các chuỗi bắt đầu ở 18, 20, 21, 23, 25. Sau đó tìm phần tử đầu tiên (từ phần tử 2 trở đi) có
+          giá trị <code>00000000</code>: đó là cluster trống đầu tiên, bạn sẽ cần nó ở câu e.
         </p>
       </Try>
       <Answer label="Xem các chuỗi cluster">
@@ -175,6 +195,18 @@ export function Directories() {
       <HexDump id="tmc1" />
       <HexDump id="tmc2" />
 
+      <Example title="Entry EXTERNAL.DLL (dòng D0020 và D0030)">
+        <p>Một entry = 32 byte = 2 dòng của ảnh hex. Entry thứ hai của sector 1664 là:</p>
+        <p className="step">45 58 54 45 52 4E 41 4C 44 4C 4C 20 18 AC 34 69<br />4A 59 4A 59 00 00 A0 08 61 35 06 00 00 1E 00 00</p>
+        <ol>
+          <li>Byte 0 = <code>45</code>, không phải <code>00</code> hay <code>E5</code> → entry đang dùng.</li>
+          <li>Byte <code>0B</code> (byte thứ 12 của dòng đầu) = <code>20</code>, không phải <code>0F</code> → entry chính, bit A bật → tập tin.</li>
+          <li>Byte 0–7 = “EXTERNAL”, byte 8–A = “DLL” (đọc xuôi theo cột chữ bên phải) → tên <b>EXTERNAL.DLL</b>.</li>
+          <li>Cluster: word cao ở <code>14</code> = <code>00 00</code>, word thấp ở <code>1A</code> = <code>06 00</code> → cluster <b>6</b>.</li>
+          <li>Kích thước ở <code>1C</code> = <code>00 1E 00 00</code> → đảo: <code>00001E00</code> = <b>7680 byte</b>.</li>
+          <li>Tra bảng FAT: 6 → 7 → 8 → 9 → hết. Đổi sector: cluster 6 = 1664 + (6 − 2) × 4 = 1680, cluster 9 kết thúc ở 1695 → <b>sector 1680–1695</b>.</li>
+        </ol>
+      </Example>
       <Try>
         <ol>
           <li>Trong sector 1664, chia thành từng entry 32 byte (2 dòng một entry). Gạch các entry <code>E5</code> và nhãn volume.</li>

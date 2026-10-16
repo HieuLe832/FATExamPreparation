@@ -8,8 +8,12 @@ export function Hero() {
       <h1>FAT vừa đủ làm bài</h1>
       <p className="lead">
         Trang này chỉ dạy phần bài giảng cần để giải hết <b>Baitap_HTTT.pdf</b>: đọc bảng phân vùng trong MBR (bài 1)
-        và đọc một volume FAT32 từ hex dump (bài 2). Mỗi bước có trích slide, cách làm, phần để bạn tự thử trên chính
-        hex dump của đề, rồi mới đến đáp án.
+        và đọc một volume FAT32 từ hex dump (bài 2). Không cần biết trước gì: nếu bạn chưa vững hệ 16 hay chưa rõ
+        sector là gì, bắt đầu từ phần <a href="#co-ban">Kiến thức nền</a>.
+      </p>
+      <p className="lead">
+        Mỗi bước đi theo thứ tự: trích slide, giải thích, một ví dụ <b>làm mẫu</b> từng bước, phần <b>tự làm</b> trên
+        chính hex dump của đề, rồi mới đến đáp án. Gặp chữ lạ thì tra <a href="#tu-dien">Từ điển</a>.
       </p>
       <div className="scope">
         <div className="need">
@@ -58,6 +62,11 @@ export function HexBasics() {
           </li>
           <li>Chuỗi ký tự (tên tập tin, “FAT32”) thì đọc xuôi, không đảo.</li>
           <li>Đề chỉ chụp “phần đầu” mỗi sector; phần không chụp coi như toàn <code>00</code>.</li>
+          <li>
+            <b>Tìm một byte trên ảnh:</b> offset <code>0E</code> nghĩa là dòng <code>00000000</code> (dòng đầu), cột{" "}
+            <code>E</code>. Offset <code>1C</code> nghĩa là dòng <code>00000010</code>, cột <code>C</code>: chữ số cuối là
+            cột, phần còn lại là dòng.
+          </li>
         </ul>
       </div>
       <Calculators />

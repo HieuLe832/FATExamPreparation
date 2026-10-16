@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Hero, HexBasics } from "./sections/Intro.jsx";
+import Foundations from "./sections/Foundations.jsx";
+import Glossary from "./sections/Glossary.jsx";
 import Mbr from "./sections/Mbr.jsx";
 import { Boot, Directories, Fat } from "./sections/Volume.jsx";
 import Operations from "./sections/Operations.jsx";
@@ -7,6 +9,7 @@ import { CheatSheet, Pitfalls } from "./sections/Reference.jsx";
 
 const STEPS = [
   ["pham-vi", "Phạm vi"],
+  ["co-ban", "Kiến thức nền"],
   ["hex", "0 · Đọc hex dump"],
   ["mbr", "1 · MBR"],
   ["boot", "2a · Boot sector"],
@@ -15,6 +18,7 @@ const STEPS = [
   ["ops", "2c–e · Move, Xóa, Copy"],
   ["pitfalls", "Lỗi hay gặp"],
   ["cheat", "Tóm tắt công thức"],
+  ["tu-dien", "Từ điển"],
 ];
 
 function useCurrentSection() {
@@ -45,6 +49,7 @@ export default function App() {
       </nav>
       <main>
         <Hero />
+        <Foundations />
         <HexBasics />
         <Mbr />
         <Boot />
@@ -53,6 +58,7 @@ export default function App() {
         <Operations />
         <Pitfalls />
         <CheatSheet />
+        <Glossary />
       </main>
     </div>
   );
