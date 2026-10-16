@@ -128,6 +128,10 @@ never in the repo.
   and arithmetic over sentences.
 - Write for a beginner: plain words, show the arithmetic (`26 = 2 × 16 + 6 = 38`), say where a byte is
   (row, column). New terms go in `Glossary.jsx` with a one-line meaning.
+- **Light/dark is the learner's choice**, not the system's: the button in the top bar sets `data-theme` on
+  `<html>` and saves it in `localStorage` (`fat-guide:theme`); an inline script in `index.html` applies it
+  before the first paint (the system setting is only the default before any choice). New colours need a
+  light value on `:root` and a dark value in both dark blocks of `styles.css`.
 - Group digits with no-break spaces (`2 097 152`, as `num()` in `annotate.js` does) so a number
   never wraps mid-way.
 - Commit messages: `type: summary` (e.g. `feat: add FAT chain lesson`, `fix: correct cluster 11 sector`).

@@ -37,6 +37,7 @@ const GROUPS = [
 const STEPS = GROUPS.flatMap((g) => g.steps.map((s) => ({ ...s, group: g.name })));
 const LESSONS = STEPS.filter((s) => !s.reference);
 const PROGRESS_KEY = "fat-guide:done";
+const THEME_KEY = "fat-guide:theme";
 
 // Hashes from the previous layout, so old links still land on the matching page.
 const OLD_HASHES = {
@@ -65,6 +66,21 @@ function useProgress() {
     reset: () => save(new Set()),
   };
 }
+
+/** Light or dark, chosen with the button in the top bar. index.html applies the saved choice before render. */
+function useTheme() {
+  const [theme, setTheme] = useState(() => (document.documentElement.dataset.theme === "dark" ? "dark" : "light"));
+  const toggle = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem(THEME_KEY, next); } catch { /* the choice just won't persist */ }
+    setTheme(next);
+  };
+  return [theme, toggle];
+}
+
+const SUN = <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" /><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" /></svg>;
+const MOON = <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" /></svg>;
 
 function Outline({ current, done, onPick }) {
   return (
@@ -114,6 +130,7 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [lookupOpen, setLookupOpen] = useState(false);
   const { done, markDone, reset } = useProgress();
+  const [theme, toggleTheme] = useTheme();
 
   useEffect(() => {
     const onHash = () => { setStep(stepFromHash()); setMenuOpen(false); setLookupOpen(false); window.scrollTo(0, 0); };
@@ -145,6 +162,11 @@ export default function App() {
               <span style={{ width: `${pct}%` }} />
             </span>
           </div>
+          <button type="button" className="theme-btn" onClick={toggleTheme}
+            aria-label={theme === "dark" ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
+            title={theme === "dark" ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}>
+            {theme === "dark" ? SUN : MOON}<span>{theme === "dark" ? "Sáng" : "Tối"}</span>
+          </button>
           <button type="button" className="menu-btn" aria-expanded={menuOpen} aria-controls="outline-panel" onClick={() => setMenuOpen((o) => !o)}>
             {menuOpen ? "Đóng" : "Mục lục"}
           </button>
