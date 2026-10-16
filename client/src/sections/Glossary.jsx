@@ -26,7 +26,7 @@ const TERMS = [
 export default function Glossary() {
   return (
     <section id="tu-dien">
-      <SectionHead tag="Gặp chữ lạ thì tra ở đây" title="Từ điển thuật ngữ" />
+      <SectionHead tag="Tra cứu" title="Từ điển thuật ngữ" />
       <dl className="glossary">
         {TERMS.map(([term, meaning]) => (
           <div key={term}><dt>{term}</dt><dd>{meaning}</dd></div>

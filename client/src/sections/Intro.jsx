@@ -3,17 +3,17 @@ import { Check, Goal, SectionHead, SubStep, SubSteps } from "../components/Study
 
 export function Hero({ groups = [], done = new Set() }) {
   let n = 0;
-  const shown = groups.filter((g) => g.name !== "Khởi động" && g.name !== "Tra cứu");
+  const shown = groups.filter((g) => g.name !== "Giới thiệu" && g.name !== "Tra cứu");
   return (
     <header className="hero" id="pham-vi">
       <div className="hero-strip" aria-hidden="true">
         <span>EB 58 90 4D 53 44 4F 53 35 2E 30 00 02 02 06 00</span>
         <span className="hero-strip-asc">ëX.MSDOS5.0.....</span>
       </div>
-      <h1>FAT vừa đủ làm bài</h1>
+      <h1>Hệ thống tập tin FAT32</h1>
       <p className="lead">
-        Đọc <b>kiến thức nền</b> để biết từng phần của ổ đĩa là gì. Sau đó giải một <b>đề mini</b> giống Baitap_HTTT,
-        chia thành từng bước nhỏ. Làm xong đề mini là làm được đề thật.
+        Hướng dẫn giải Baitap_HTTT: bài 1 về MBR, bài 2 về volume FAT32. <b>Kiến thức nền</b> giải thích từng vùng của
+        ổ đĩa; <b>đề mini</b> là một bài cùng dạng với số nhỏ hơn, giải từng bước trước khi làm đề thật.
       </p>
       <div className="roadmap-groups">
         {shown.map((g) => (
@@ -44,7 +44,7 @@ const HEX_DIGITS = [["A", 10], ["B", 11], ["C", 12], ["D", 13], ["E", 14], ["F",
 export function HexBasics() {
   return (
     <section id="hex">
-      <SectionHead tag="Dùng cho mọi câu" title="Byte và hex" />
+      <SectionHead tag="Kiến thức nền" title="Byte và hex" />
       <Goal>Đọc được một con số trong hex dump.</Goal>
       <SubSteps>
         <SubStep title="Hex là gì">

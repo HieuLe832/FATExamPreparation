@@ -97,6 +97,9 @@ never in the repo.
 ## Conventions
 
 - UI language is Vietnamese with full diacritics.
+- **Neutral, textbook tone.** No slogans, jokes or chatty taglines: the user found "FAT vừa đủ làm bài",
+  "Mang vào phòng thi trong đầu", "Sẵn sàng?" and book analogies like "phần ruột cuốn sách" cringe. Section tags
+  are just the group name (Kiến thức nền, Đề mini, Đề thật, Tra cứu).
 - **No slide images or slide-number references.** The user found the crops hard to read. Show what's
   needed directly as text and small tables.
 - The app shows **one lesson per screen** (hash routing in `App.jsx`: `#mbr`, `#boot`, …) with a course

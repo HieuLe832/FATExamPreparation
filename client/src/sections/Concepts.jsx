@@ -22,8 +22,8 @@ export function DiskConcept() {
       </div>
 
       <h3>MBR</h3>
-      <p><b>MBR</b> là sector đầu tiên của ổ cứng (sector 0). Nó giống trang mục lục của cả ổ: có <b>4 chỗ</b>, mỗi chỗ ghi về 1 phân vùng.</p>
-      <KeyPoints title="Mỗi phân vùng được ghi 4 điều">
+      <p><b>MBR</b> là sector đầu tiên của ổ cứng (sector 0). Nó chứa <b>bảng phân vùng</b> gồm <b>4 dòng</b>, mỗi dòng mô tả 1 phân vùng.</p>
+      <KeyPoints title="Mỗi dòng ghi 4 thông tin">
         <Table head={["Thông tin", "Để biết"]} rows={[
           ["Khởi động", "Máy khởi động từ phân vùng nào (gọi là phân vùng “active”)"],
           ["Loại", "Phân vùng dùng hệ thống tập tin gì: NTFS, FAT32, Linux…"],
@@ -32,7 +32,7 @@ export function DiskConcept() {
         ]} />
       </KeyPoints>
       <p className="note">Một phân vùng đã định dạng gọi là một <b>volume</b>. Bài 2 nhìn vào bên trong một volume FAT32.</p>
-      <Check q="Bảng trong MBR có tối đa mấy phân vùng?">4, vì bảng chỉ có 4 chỗ</Check>
+      <Check q="Bảng trong MBR có tối đa mấy phân vùng?">4, vì bảng chỉ có 4 dòng</Check>
     </section>
   );
 }
@@ -51,11 +51,11 @@ export function VolumeConcept() {
           <div className="l-data" style={{ flex: 4 }}><b>Data</b><span>nội dung file và thư mục</span></div>
         </div>
       </div>
-      <Table head={["Vùng", "Để làm gì", "Giống như"]} rows={[
-        [<b>Boot sector</b>, "Ghi các thông số của volume", "Trang đầu ghi thông tin cuốn sách"],
-        [<b>FAT1</b>, "Ghi mỗi file nằm ở những cluster nào", "Sổ ghi “trang tiếp theo”"],
-        [<b>FAT2</b>, "Bản sao của FAT1, dùng khi FAT1 hỏng", "Bản photo dự phòng"],
-        [<b>Data</b>, "Chứa nội dung file và các bảng thư mục", "Phần ruột cuốn sách"],
+      <Table head={["Vùng", "Để làm gì"]} rows={[
+        [<b>Boot sector</b>, "Ghi các thông số của volume"],
+        [<b>FAT1</b>, "Ghi mỗi file nằm ở những cluster nào"],
+        [<b>FAT2</b>, "Bản sao của FAT1, dùng khi FAT1 hỏng"],
+        [<b>Data</b>, "Chứa nội dung file và các bảng thư mục"],
       ]} />
 
       <h3>Vùng Data chia thành cluster</h3>
@@ -92,7 +92,7 @@ export function BootConcept() {
           ["Loại FAT", "Chữ “FAT32”"],
         ]} />
       </KeyPoints>
-      <h3>Trông ra sao</h3>
+      <h3>Trong hex dump</h3>
       <p>Nhìn cột chữ bên phải: có chữ “MSDOS5.0” ở dòng đầu và “FAT32” ở dòng <code>50</code>. Đó là dấu hiệu nhận ra boot sector FAT32. Hai byte cuối sector luôn là <code>55 AA</code>.</p>
       <HexDump id="boot" focus={[[0x03, 8], [0x52, 8]]} />
       <Check q="Muốn tính vùng Data bắt đầu ở đâu cần những số nào?">S<sub>B</sub>, N<sub>F</sub> và S<sub>F</sub> (Data = S<sub>B</sub> + N<sub>F</sub> × S<sub>F</sub>)</Check>
@@ -133,7 +133,7 @@ export function FatConcept() {
           <li>Volume có 2 bảng FAT giống hệt nhau (FAT1, FAT2).</li>
         </ul>
       </KeyPoints>
-      <h3>Trông ra sao</h3>
+      <h3>Trong hex dump</h3>
       <p>Trong hex dump, cứ 4 byte là 1 ô (mỗi màu là 1 ô). Hay gặp nhất là <code>FF FF FF 0F</code>: đọc ngược là <code>0FFFFFFF</code> = hết.</p>
       <HexDump id="fat" bands={Array.from({ length: 16 }, (_, k) => [6 * 512 + 4 * k, 4])} />
       <Check q="Ô 5 ghi 0FFFFFFF nghĩa là gì?">Cluster 5 là cluster cuối của một file</Check>
@@ -169,7 +169,7 @@ export function DirConcept() {
         </div>
       </div>
       <p>Muốn vào thư mục con: lấy cluster của nó trong bảng cha, rồi đọc bảng nằm ở cluster đó.</p>
-      <h3>Trông ra sao</h3>
+      <h3>Trong hex dump</h3>
       <p>Mỗi entry chiếm đúng 2 dòng hex (mỗi màu là 1 entry). Tên file đọc được ở cột chữ bên phải.</p>
       <HexDump id="rdet" bands={Array.from({ length: 7 }, (_, k) => [10 * 512 + 32 * k, 32])} />
       <Check q="Dòng “..” trong SDET chỉ đến đâu?">Thư mục cha (cluster 0 nghĩa là thư mục gốc)</Check>

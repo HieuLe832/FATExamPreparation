@@ -17,7 +17,7 @@ const PITFALLS = [
 export function Pitfalls() {
   return (
     <section id="pitfalls">
-      <SectionHead tag="Known pitfalls" title="Lỗi hay gặp" />
+      <SectionHead tag="Tra cứu" title="Lỗi hay gặp" />
       <ol className="pitfalls">
         {PITFALLS.map(([title, body], i) => (
           <li key={i}><div><b>{title}</b><p>{body}</p></div></li>
@@ -30,7 +30,7 @@ export function Pitfalls() {
 export function CheatSheet() {
   return (
     <section id="cheat">
-      <SectionHead tag="Mang vào phòng thi trong đầu" title="Tóm tắt công thức" />
+      <SectionHead tag="Tra cứu" title="Tóm tắt công thức" />
       <Table
         wrapStyle={{ maxWidth: 900 }}
         head={["Cần", "Lấy ở đâu / tính thế nào"]}

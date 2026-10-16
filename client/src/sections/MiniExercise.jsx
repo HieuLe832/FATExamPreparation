@@ -3,10 +3,10 @@ import { Goal, SectionHead, Table } from "../components/Study.jsx";
 export default function MiniExercise() {
   return (
     <section id="de-mini">
-      <SectionHead tag="Chia để trị" title="Đề mini" />
+      <SectionHead tag="Đề mini" title="Đề mini hỏi gì" />
       <Goal>Biết đề mini hỏi gì và mỗi phần học ở đâu.</Goal>
       <p className="lead">
-        Đề mini giống hệt các câu của Baitap_HTTT, nhưng đĩa nhỏ và số tròn. Ta tách nó thành 6 phần, mỗi bài sau giải một
+        Đề mini có cùng dạng câu hỏi với Baitap_HTTT, nhưng đĩa nhỏ và số tròn. Đề gồm 6 phần, mỗi bài sau giải một
         phần.
       </p>
       <Table

@@ -19,11 +19,11 @@ const CELLS = [
 export default function WhatIsFat() {
   return (
     <section id="fat-la-gi">
-      <SectionHead tag="Ý tưởng chính" title="FAT là gì?" />
+      <SectionHead tag="Kiến thức nền" title="FAT là gì?" />
       <Goal>Hiểu FAT tìm một file như thế nào.</Goal>
       <SubSteps>
-        <SubStep title="Ổ đĩa là một cuốn vở chia ô">
-          <p>Mỗi ô gọi là <b>sector</b> (512 byte). Vài ô liền nhau gộp thành một <b>cluster</b>. File được cất theo từng cluster.</p>
+        <SubStep title="Sector và cluster">
+          <p>Ổ đĩa được chia thành các ô 512 byte gọi là <b>sector</b>. Vài sector liền nhau gộp thành một <b>cluster</b>; file được cất theo từng cluster.</p>
         </SubStep>
         <SubStep title="Thư mục là mục lục">
           <p>Giống mục lục sách: mỗi dòng ghi <b>tên file</b> và <b>cluster đầu tiên</b> của file.</p>
@@ -35,16 +35,15 @@ export default function WhatIsFat() {
         </SubStep>
         <SubStep title="Bảng FAT là một linked list">
           <p>
-            Mục lục chỉ cho biết cluster <i>đầu tiên</i>. Các cluster sau nằm ở đâu thì xem <b>bảng FAT</b>: ô số k ghi
-            “sau cluster k là cluster nào”. Giống trò truy tìm kho báu: mỗi mảnh giấy chỉ đến mảnh tiếp theo, đến chữ
-            “hết” thì dừng.
+            Mục lục chỉ cho biết cluster <i>đầu tiên</i>; các cluster sau ghi trong <b>bảng FAT</b>, ô số k ghi “sau
+            cluster k là cluster nào”. Lần theo từng ô như truy tìm kho báu, đến ô ghi “hết” thì dừng.
           </p>
           <DiskMap cells={CELLS} />
           <p className="note">Dòng dưới mỗi ô là giá trị bảng FAT ghi cho ô đó. NOTE.TXT (nằm trong DOCS, viền xanh) bị rải rác: 7 → 9 → 12.</p>
           <Check q="NOTE.TXT nằm ở những cluster nào?">7, 9, 12 (bảng FAT: 7 → 9 → 12 → hết)</Check>
         </SubStep>
       </SubSteps>
-      <KeyPoints title="Tóm lại, đọc một file gồm 3 bước">
+      <KeyPoints title="Đọc một file gồm 3 bước">
         <ol>
           <li>Tra <b>mục lục</b> (thư mục) → lấy cluster đầu.</li>
           <li>Đi theo <b>linked list</b> trong bảng FAT → lấy tất cả cluster.</li>

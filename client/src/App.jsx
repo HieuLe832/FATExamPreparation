@@ -12,8 +12,8 @@ import { CheatSheet, Pitfalls } from "./sections/Reference.jsx";
 
 // One lesson is shown at a time; the URL hash (#mbr, #boot, …) says which.
 const GROUPS = [
-  { name: "Khởi động", steps: [
-    { id: "pham-vi", label: "Bắt đầu", Page: Hero },
+  { name: "Giới thiệu", steps: [
+    { id: "pham-vi", label: "Tổng quan", Page: Hero },
   ] },
   { name: "Kiến thức nền", steps: [
     { id: "fat-la-gi", label: "FAT là gì?", Page: WhatIsFat },
@@ -98,8 +98,8 @@ function Pager({ step, onDone }) {
       ) : <span />}
       {next && (
         <a className="pager-link primary" href={`#${next.id}`} onClick={onDone}>
-          <small>{i === 0 ? "Sẵn sàng?" : step.group === "Tra cứu" ? "Tiếp" : "Xong bước này, sang bước"}</small>
-          <span>{i === 0 ? "Bắt đầu học" : next.label} →</span>
+          <small>Tiếp</small>
+          <span>{next.label} →</span>
         </a>
       )}
     </div>
@@ -128,7 +128,7 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <div className="topbar-inner">
-          <a className="brand" href="#pham-vi"><span className="brand-mark" aria-hidden="true">FAT</span><span>vừa đủ làm bài</span></a>
+          <a className="brand" href="#pham-vi"><span className="brand-mark" aria-hidden="true">FAT</span><span>Hướng dẫn giải bài tập</span></a>
           <div className="progress" title={`Đã xong ${finished}/${LESSONS.length} bước`}>
             <span className="progress-text">{finished}/{LESSONS.length} bước</span>
             <span className="progress-bar" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Tiến độ học">

@@ -6,7 +6,7 @@ const n = (label) => ({ label, cls: "n" });
 export default function RealExercise() {
   return (
     <section id="de-that">
-      <SectionHead tag="Áp dụng" title="Làm đề thật" />
+      <SectionHead tag="Đề thật" title="Làm đề thật" />
       <Goal>Mở Baitap_HTTT.pdf và làm lại đúng các bước của đề mini.</Goal>
       <KeyPoints title="Chỉ khác ở các con số">
         <Table
