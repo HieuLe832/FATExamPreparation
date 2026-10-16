@@ -320,3 +320,10 @@ dl.glossary dd { margin: 2px 0 0; font-size: 0.94rem; }
 .toc > div { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px dotted var(--line); }
 .toc > div:last-child { border-bottom: 0; }
 .toc > div > span:last-child { color: var(--accent); }
+
+/* ---------- focused hex dumps inside each sub-step (fifth pass) ---------- */
+.hex .b.dim { opacity: 0.25; }
+.hex .b.dim.sel { opacity: 1; }
+.dump-head h4 { margin: 0; font-family: var(--font-mono); font-size: 0.78rem; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; }
+.info .hint { color: var(--muted); font-size: 0.9rem; }
+.substep-body .dump { max-width: 100%; }

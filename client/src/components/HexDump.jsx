@@ -5,28 +5,32 @@ import { annotate, h2, hx } from "../fat/annotate.js";
 
 const COLS = Array.from({ length: 16 }, (_, c) => c);
 
-/** Loads one exercise dump from the backend, then renders it. */
-export default function HexDump({ id }) {
+/**
+ * Loads one dump of the mini disk from the backend, then renders it.
+ * `focus`: [[offset, length], …] absolute byte ranges this step talks about; everything else is dimmed.
+ * `from` / `to`: absolute offsets of the first and last row to show (default: the whole dump).
+ */
+export default function HexDump({ id, focus, from, to }) {
   const [state, setState] = useState({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
-    const ctrl = new AbortController();
+    let alive = true;
     setState({ status: "loading" });
-    fetchHexDump(id, ctrl.signal)
-      .then((dump) => setState({ status: "ready", dump }))
-      .catch((err) => { if (!ctrl.signal.aborted) setState({ status: "error", message: err.message }); });
-    return () => ctrl.abort();
+    fetchHexDump(id)
+      .then((dump) => alive && setState({ status: "ready", dump }))
+      .catch((err) => alive && setState({ status: "error", message: err.message }));
+    return () => { alive = false; };
   }, [id, attempt]);
 
-  if (state.status === "ready") return <HexDumpView d={state.dump} />;
+  if (state.status === "ready") return <HexDumpView d={state.dump} focus={focus} from={from} to={to} />;
   return (
     <div className="dump">
       <div className="info" role={state.status === "error" ? "alert" : "status"}>
         {state.status === "loading" ? (
-          <div className="what">Đang tải hex dump “{id}” từ backend…</div>
+          <div className="what">Đang tải hex dump…</div>
         ) : (
           <>
-            <div className="what">Chưa tải được hex dump “{id}” ({state.message}).</div>
+            <div className="what">Chưa tải được hex dump ({state.message}).</div>
             <div className="calc">
               {import.meta.env.DEV
                 ? <>Chạy backend bằng <b>dotnet run --project server</b> rồi bấm thử lại.</>
@@ -41,7 +45,7 @@ export default function HexDump({ id }) {
 }
 
 /** Clickable hex dump: each byte belongs to a field segment; selecting one explains it. */
-function HexDumpView({ d }) {
+function HexDumpView({ d, focus, from, to }) {
   const { bytes, segs, owner } = useMemo(() => {
     const bytes = parseHex(d.hex);
     const segs = annotate(d.kind, bytes, d.base);
@@ -49,12 +53,17 @@ function HexDumpView({ d }) {
     segs.forEach((s, si) => { for (let k = 0; k < s.len; k++) owner[s.start + k] = si; });
     return { bytes, segs, owner };
   }, [d]);
-  const [sel, setSel] = useState(() => owner[d.pick - d.base]);
-  const cur = segs[sel];
+  const [sel, setSel] = useState(null);
+  const cur = sel === null ? null : segs[sel];
+
+  const firstRow = from === undefined ? 0 : (from - d.base) / 16;
+  const lastRow = to === undefined ? bytes.length / 16 - 1 : (to - d.base) / 16;
+  const rows = Array.from({ length: lastRow - firstRow + 1 }, (_, i) => firstRow + i);
+  const inFocus = (i) => !focus || focus.some(([o, n]) => d.base + i >= o && d.base + i < o + n);
 
   const cellClass = (i, c) => {
     const s = segs[owner[i]];
-    let cls = "b " + s.cls + (c === 8 ? " gap" : "");
+    let cls = "b " + s.cls + (c === 8 ? " gap" : "") + (inFocus(i) ? "" : " dim");
     if (owner[i] === sel) {
       cls += " sel";
       if (i === s.start || c === 0) cls += " sel-l";
@@ -70,8 +79,7 @@ function HexDumpView({ d }) {
   return (
     <div className="dump">
       <div className="dump-head">
-        <h3>{d.title}</h3>
-        <span>offset {hx(d.base, 5)} = sector {Math.floor(d.base / 512)} · {d.note}</span>
+        <h4>{d.title}</h4>
       </div>
       <div className="hexwrap">
         <div className="hex" aria-label={d.title}>
@@ -81,7 +89,7 @@ function HexDumpView({ d }) {
               {COLS.map((c) => <span key={c} className={"b" + (c === 8 ? " gap" : "")} style={{ cursor: "default" }}>{c.toString(16).toUpperCase()}</span>)}
             </span>
           </div>
-          {Array.from({ length: bytes.length / 16 }, (_, r) => (
+          {rows.map((r) => (
             <div className="row" key={r}>
               <span className="off">{(d.base + r * 16).toString(16).toUpperCase().padStart(8, "0")}</span>
               <span className="bytes">
@@ -103,9 +111,15 @@ function HexDumpView({ d }) {
         </div>
       </div>
       <div className="info" aria-live="polite">
-        <div className="what" dangerouslySetInnerHTML={{ __html: `${hx(d.base + cur.start, 5)} · ${cur.what}` }} />
-        {cur.calc && <div className="calc" dangerouslySetInnerHTML={{ __html: cur.calc }} />}
-        {cur.ent && <div className="ent" dangerouslySetInnerHTML={{ __html: cur.ent }} />}
+        {cur ? (
+          <>
+            <div className="what" dangerouslySetInnerHTML={{ __html: `${hx(d.base + cur.start, 5)} · ${cur.what}` }} />
+            {cur.calc && <div className="calc" dangerouslySetInnerHTML={{ __html: cur.calc }} />}
+            {cur.ent && <div className="ent" dangerouslySetInnerHTML={{ __html: cur.ent }} />}
+          </>
+        ) : (
+          <div className="hint">Bấm vào một byte để xem nó là gì.</div>
+        )}
       </div>
     </div>
   );

@@ -73,8 +73,11 @@ cd client && API_PROXY_TARGET=http://localhost:8080 npm run dev   # point the de
 - The app shows **one lesson per screen** (hash routing in `App.jsx`: `#mbr`, `#boot`, …) with a course
   outline, progress saved in `localStorage` (`fat-guide:done`), and Trước/Tiếp at the bottom. New lessons
   are added to `GROUPS` in `App.jsx`.
-- Each lesson goes: `<Goal>` (1 line) → hex dump → `<SubSteps>` (each: 1–2 sentences or a tiny table, then
-  a `<Check>`) → collapsed `<Answer>` "Ghép lại" that assembles the part's full answer.
+- Each lesson goes: `<Goal>` (1 line) → `<SubSteps>` → collapsed `<Answer>` "Ghép lại" that assembles the
+  part's full answer. Each sub-step reads top to bottom: 1–2 sentences or a tiny table → its own
+  `<HexDump id focus={[[offset, len], …]} from to />` showing only the rows it needs with its bytes lit and
+  the rest dimmed → a `<Check>`. Never put one dump at the top of a lesson for the steps to point back to
+  (the user flagged that ordering), and never preselect a field: the info box would spoil the next step.
 - **Keep it short. The user rejected a wordy version as hard to understand.** No paragraphs longer than 2
   sentences, no meta text ("trang này dạy…"), no explanation the exercise doesn't need. Answers are a table
   plus at most one line. A lesson page should stay under ~180 words outside hex dumps and answers.

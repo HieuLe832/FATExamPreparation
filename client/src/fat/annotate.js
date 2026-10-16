@@ -32,6 +32,10 @@ function annotateMbr(b) {
   ];
   for (let p = 0; p < 4; p++) {
     const e = 0x0e + p * 16, P = `Phân vùng ${p + 1} · `;
+    if (b.slice(e, e + 16).every((x) => x === 0)) {
+      s.push(seg(e, 16, "k-free", P + "trống", "16 byte toàn 00 → không có phân vùng này"));
+      continue;
+    }
     const n = le(b, e + 12, 4), bytes = n * 512;
     const size = bytes >= 2 ** 30 ? `${vnFixed(bytes / 2 ** 30)} GB` : `${vnFixed(bytes / 2 ** 20)} MB`;
     s.push(

@@ -8,10 +8,10 @@ export default function Mbr() {
     <section id="mbr">
       <SectionHead tag="Đề mini · phần 1" title="MBR và phân vùng" />
       <Goal>Ổ có mấy phân vùng, loại gì, dung lượng bao nhiêu, phân vùng nào khởi động.</Goal>
-      <HexDump id="mbr" />
       <SubSteps>
         <SubStep title="Tìm bảng phân vùng">
           <p>MBR là sector 0 của ổ cứng. Bảng phân vùng có 4 dòng, mỗi dòng 16 byte, bắt đầu ở <code>1BE</code>, <code>1CE</code>, <code>1DE</code>, <code>1EE</code>. Dòng toàn <code>00</code> = không có phân vùng.</p>
+          <HexDump id="mbr" focus={[[0x1be, 64]]} />
           <Check q="Đề mini có mấy phân vùng?">2 (dòng 1DE và 1EE toàn 00)</Check>
         </SubStep>
         <SubStep title="Khởi động và loại">
@@ -19,6 +19,7 @@ export default function Mbr() {
             [<code>+0</code>, <><code>80</code> = phân vùng khởi động, <code>00</code> = không</>],
             [<code>+4</code>, <>Loại: <code>07</code> NTFS · <code>83</code> Linux · <code>0B</code>/<code>0C</code> FAT32 · <code>0F</code> Extended</>],
           ]} />
+          <HexDump id="mbr" focus={[[0x1be, 1], [0x1c2, 1], [0x1ce, 1], [0x1d2, 1]]} />
           <Check q="Phân vùng nào khởi động?">Phân vùng 1 (byte 1BE = 80), loại 07 = NTFS</Check>
         </SubStep>
         <SubStep title="Vị trí và dung lượng">
@@ -27,6 +28,7 @@ export default function Mbr() {
             [<code>+C</code>, "Số sector (4 byte, đọc ngược)"],
           ]} />
           <p>Dung lượng = số sector × 512. Phân vùng 1: <code>00 00 20 00</code> → <code>00200000</code> = 2 097 152 sector × 512 = <b>1 GB</b>.</p>
+          <HexDump id="mbr" focus={[[0x1c6, 8], [0x1d6, 8]]} />
           <Check q="Phân vùng 2 bao nhiêu?"><code>00 00 10 00</code> → 1 048 576 sector × 512 = 512 MB</Check>
         </SubStep>
       </SubSteps>
