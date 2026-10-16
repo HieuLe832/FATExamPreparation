@@ -162,7 +162,7 @@ table.hexdigits td { text-align: center; min-width: 3.2ch; font-size: 1.05rem; }
 .hexwrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); }
 .hex { font-family: var(--font-mono); font-size: 0.86rem; line-height: 1; padding: 12px 14px; width: max-content; font-variant-numeric: tabular-nums; }
 .hex .row { display: flex; align-items: center; }
-.hex .row.colhead { color: var(--muted); font-size: 0.72rem; padding-bottom: 6px; }
+.hex .row.colhead { color: var(--muted); padding-bottom: 6px; } /* same font size as the bytes, or the ch-based columns no longer line up */
 .hex .off { width: 8.6ch; color: var(--accent); padding-right: 1.2ch; }
 .hex .bytes { display: flex; }
 .hex .b { width: 2.9ch; text-align: center; padding: 5px 0; cursor: pointer; }

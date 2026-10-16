@@ -118,6 +118,9 @@ cd client && API_PROXY_TARGET=http://localhost:8080 npm run dev   # point the de
 - **Headless Firefox hangs in this environment.** For screenshots use Playwright's Chromium, installed outside
   the repo (`npm i playwright@1.48.2 && npx playwright install chromium` in a scratch folder). Check 390px
   width for horizontal overflow: grids need `minmax(0, 1fr)` columns or wide hex dumps stretch the page.
+- **Hex dump columns are sized in `ch`, which depends on font size.** The header row (0–F) must use the same
+  font size as the byte rows or it shrinks and drifts out of line. Check with a script that compares header
+  and byte cell centres (expect 0 px), not by eye.
 - **A fixed drawer inside a grid needs `align-self: stretch`**; the desktop sidebar's `align-self: start`
   otherwise shrinks the mobile "Mục lục" panel.
 - **Headings use Bricolage Grotesque** (proportional, has Vietnamese). Keep monospace for hex, code and
