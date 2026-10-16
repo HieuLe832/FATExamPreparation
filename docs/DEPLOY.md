@@ -89,22 +89,18 @@ Từ giờ mỗi lần push, Vercel tự deploy lại frontend.
 
 Repo trên GitHub → **Settings → Secrets and variables → Actions**.
 
-Tab **Secrets** → **New repository secret**:
+Tab **Secrets** → **New repository secret**, thêm 5 secret:
 
 | Name | Value |
 | --- | --- |
 | `VM_SSH_KEY` | Toàn bộ nội dung file `.pem`, kể cả dòng `-----BEGIN …-----` và `-----END …-----` |
-
-Tab **Variables** → **New repository variable**:
-
-| Name | Value |
-| --- | --- |
 | `VM_HOST` | IP hoặc `<API_DOMAIN>` của VM |
 | `VM_USER` | user SSH, thường là `azureuser` |
 | `API_DOMAIN` | `<API_DOMAIN>` |
 | `FRONTEND_ORIGIN` | `<VERCEL_URL>` (có `https://`, không có `/` cuối) |
 
-Lấy nội dung `.pem` để dán: `cat ~/.ssh/key.pem`, copy hết. Chỉ dán vào ô secret của GitHub, không gửi cho ai.
+Secret lưu xong thì không xem lại được và hiện thành `***` trong log, nên gõ thật cẩn thận. Lấy nội dung
+`.pem` để dán: `cat ~/.ssh/key.pem`, copy hết. Chỉ dán vào ô secret của GitHub, không gửi cho ai.
 
 ---
 
@@ -130,12 +126,12 @@ Rồi mở `<VERCEL_URL>`: các hex dump phải tải được. Từ đây, mỗ
 
 | Triệu chứng | Nguyên nhân | Cách sửa |
 | --- | --- | --- |
-| Job deploy báo `Repository variable … is not set` | Thiếu biến ở bước 4 | Thêm biến còn thiếu, chạy lại workflow |
+| Job deploy báo `Secret … is not set` | Thiếu secret ở bước 4 | Thêm secret còn thiếu, chạy lại workflow |
 | Lỗi ở bước *Deploy to the VM*: `Permission denied (publickey)` | Sai `VM_USER` hoặc `VM_SSH_KEY` dán thiếu dòng | Dán lại đủ nội dung `.pem`; kiểm tra user bằng `ssh -i key.pem <user>@<IP>` |
 | `scp: /opt/fat-guide/...: No such file or directory` | Chưa chạy `setup.sh` (bước 2) | Làm bước 2 |
 | `docker: command not found` hoặc `permission denied … docker.sock` | Docker chưa cài, hoặc user chưa vào nhóm docker | Chạy lại bước 2, rồi SSH lại |
 | Bước *Check the public URL* lỗi | Cổng 80/443 chưa mở, hoặc DNS name label chưa đặt | Làm lại bước 1; xem `docker compose logs caddy` trên VM |
-| Trang Vercel báo “Chưa tải được”, Console có chữ `CORS` | `FRONTEND_ORIGIN` sai hoặc thừa `/` cuối | Sửa biến rồi chạy lại workflow |
+| Trang Vercel báo “Chưa tải được”, Console có chữ `CORS` | Secret `FRONTEND_ORIGIN` sai hoặc thừa `/` cuối | Ghi đè secret đó rồi chạy lại workflow |
 | Trang Vercel báo “Chưa tải được (HTTP 404)” | `VITE_API_BASE_URL` sai, ví dụ có thêm `/api` | Sửa biến trên Vercel rồi **Redeploy** |
 | Link preview của Vercel không tải được API | CORS chỉ cho phép domain chính | Bình thường; dùng domain chính |
 

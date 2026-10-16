@@ -88,7 +88,7 @@ There are no `.env` files in the repo; only `client/.env.example` (a template, t
 | Backend, local | `appsettings.Development.json` + `launchSettings.json` | `Cors:AllowedOrigins`, `ASPNETCORE_ENVIRONMENT=Development`, port 5080 |
 | Backend, VM | `/opt/fat-guide/.env`, written by the workflow each deploy | `API_IMAGE`, `API_DOMAIN`, `FRONTEND_ORIGIN` (→ `Cors__AllowedOrigins__0`) |
 | Backend, Docker locally | `docker run -e …` | `Cors__AllowedOrigins__0=…`; `ASPNETCORE_URLS` is set in the Dockerfile |
-| GitHub Actions | repo secret + repo variables | secret `VM_SSH_KEY`; variables `VM_HOST`, `VM_USER`, `API_DOMAIN`, `FRONTEND_ORIGIN` |
+| GitHub Actions | repo secrets (the user wants all of them as secrets) | `VM_SSH_KEY`, `VM_HOST`, `VM_USER`, `API_DOMAIN`, `FRONTEND_ORIGIN` |
 
 ASP.NET does not read `.env` files; use appsettings, environment variables or `dotnet user-secrets`. Any
 future secret (e.g. a Supabase connection string) goes in user-secrets locally and Azure App Settings,
@@ -136,7 +136,7 @@ never in the repo.
 - **`VITE_API_BASE_URL` is baked in at build time.** Changing it on Vercel needs a redeploy. Use the origin
   only (`https://x.azurewebsites.net`), no `/api`; a trailing slash is stripped in `api/hexDumps.js`.
 - **CORS origins must match exactly** (scheme, host, no trailing slash). On the VM the single allowed origin
-  is the `FRONTEND_ORIGIN` repo variable; Vercel preview URLs differ from production and are blocked.
+  is the `FRONTEND_ORIGIN` repo secret; Vercel preview URLs differ from production and are blocked.
 - **The API must be served over HTTPS.** The Vercel page is `https://`, and browsers block calls to a plain
   `http://IP` (mixed content). That's why Caddy sits in front with a domain (Azure Public IP "DNS name
   label" → `*.cloudapp.azure.com`) and needs NSG inbound 80 and 443 open.

@@ -3,12 +3,12 @@ name: Deploy API to Azure VM
 # On every push to main that touches the backend: test, build the Docker image, push it to GHCR,
 # then SSH into the VM and restart the stack in /opt/fat-guide (see deploy/vm/).
 #
-# Repo settings → Secrets and variables → Actions:
-#   secret   VM_SSH_KEY       private key (.pem content) for the VM user
-#   variable VM_HOST          VM public IP or DNS name
-#   variable VM_USER          SSH user, e.g. azureuser
-#   variable API_DOMAIN       domain pointing at the VM, e.g. fat-api.southeastasia.cloudapp.azure.com
-#   variable FRONTEND_ORIGIN  e.g. https://fat-guide.vercel.app (allowed by CORS)
+# Repo settings → Secrets and variables → Actions → Secrets (all five are secrets, so they show as *** in logs):
+#   VM_SSH_KEY       private key (.pem content) for the VM user
+#   VM_HOST          VM public IP or DNS name
+#   VM_USER          SSH user, e.g. azureuser
+#   API_DOMAIN       domain pointing at the VM, e.g. fat-api.eastasia.cloudapp.azure.com
+#   FRONTEND_ORIGIN  e.g. https://fat-guide.vercel.app (allowed by CORS)
 
 on:
   push:
@@ -46,17 +46,17 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     env:
-      VM_HOST: ${{ vars.VM_HOST }}
-      VM_USER: ${{ vars.VM_USER }}
-      API_DOMAIN: ${{ vars.API_DOMAIN }}
-      FRONTEND_ORIGIN: ${{ vars.FRONTEND_ORIGIN }}
+      VM_HOST: ${{ secrets.VM_HOST }}
+      VM_USER: ${{ secrets.VM_USER }}
+      API_DOMAIN: ${{ secrets.API_DOMAIN }}
+      FRONTEND_ORIGIN: ${{ secrets.FRONTEND_ORIGIN }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Check settings
         run: |
           for v in VM_HOST VM_USER API_DOMAIN FRONTEND_ORIGIN; do
-            [ -n "${!v}" ] || { echo "::error::Repository variable $v is not set"; exit 1; }
+            [ -n "${!v}" ] || { echo "::error::Secret $v is not set"; exit 1; }
           done
 
       - name: Name the image
@@ -102,7 +102,7 @@ jobs:
             if curl -fsS "https://$API_DOMAIN/api/health"; then echo; exit 0; fi
             sleep 5
           done
-          echo "::error::https://$API_DOMAIN/api/health is not reachable (NSG ports 80/443? DNS?)"
+          echo "::error::The API health URL is not reachable over HTTPS (NSG ports 80/443? API_DOMAIN secret? DNS?)"
           exit 1
 
       - name: Remove the key
