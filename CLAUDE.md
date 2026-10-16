@@ -59,6 +59,7 @@ giờ bấm vào các ô để xem"). So:
 | `server/Controllers/HexDumpsController.cs` | `GET /api/hex-dumps`, `GET /api/hex-dumps/{id}` |
 | `server/Controllers/HealthController.cs` | `GET /api/health` (Azure health check, deploy smoke test) |
 | `server/Services/` | `IHexDumpService`, `JsonHexDumpService` (loads and validates the JSON at startup) |
+| `server/Security/RateLimiting.cs` | Per-IP and total request limits (`RateLimits` in `appsettings.json`), 429 + Retry-After |
 | `server/Models/` | `HexDump`, `HexDumpSummary` |
 | `client/src/api/hexDumps.js` | Fetches a dump from the API |
 | `client/src/fat/dumps.js` | Mini disk layout constants (data start 10, 2 sectors/cluster, FAT1 at sector 6) and `parseHex` |
@@ -67,8 +68,8 @@ giờ bấm vào các ô để xem"). So:
 | `client/src/fat/baitap.fixture.json`, `baitap.test.js` | Dumps transcribed from Baitap_HTTT.pdf (test data only) and the test that pins every number in `RealExercise.jsx` |
 | `client/src/components/` | `HexDump` (coloured dump + list), `Calculators`, shared `Study` blocks |
 | `client/src/sections/` | `Start`, `HexSkills`, `DiskOverview`, `Mbr` (câu 1), `Boot` (2a), `Fat` (2b), `Tree` (2b), `Operations` (2c–e), `RealExercise` (real-exercise block per question), `Lookup` (memorise blocks for the Bảng tra column), `Reference` (Bảng phải thuộc + lỗi hay gặp), `Glossary` (+ calculators) |
-| `client/vercel.json` | Vercel build settings |
-| `deploy/vm/` | VM stack: `docker-compose.yml` (api + caddy), `Caddyfile`, `deploy.sh` (run by CD), `setup.sh` (one-time Docker install) |
+| `client/vercel.json` | Vercel build settings and security headers |
+| `deploy/vm/` | VM stack: `docker-compose.yml` (api + caddy), `Caddyfile`, `deploy.sh` (run by CD), `setup.sh` (one-time Docker install), `harden.sh` (one-time SSH lockdown, fail2ban, auto updates) |
 | `.github/workflows/deploy-api.yml` | CD for the API to the VM |
 | `docs/DEPLOY.md` | Deploy guide for the user (Azure + Vercel) |
 
@@ -175,6 +176,24 @@ never in the repo.
   `curl -k https://localhost/api/health`. Lint the workflow with `docker run rhysd/actionlint:1.7.1` and the
   scripts with `koalaman/shellcheck:v0.10.0`.
 - **`HexDump` keeps its "Thử lại" button** for when the API is restarting during a deploy; don't remove it.
+- **The user is on Azure for Students and fears a surprise bill.** Cost guards: rate limits in the API,
+  browser caching of dumps (10 min), Caddy only forwards `GET`/`HEAD` on `/api/*` (everything else is a
+  404 from Caddy), CPU/RAM caps and log rotation in `docker-compose.yml`. Section 6 of `docs/DEPLOY.md`
+  covers the Azure side (offer check, budget, costly extras like Bastion). Keep those numbers in sync with
+  `appsettings.json` if they change.
+- **A new endpoint that isn't `GET /api/...` is blocked by the Caddyfile.** Add its method or path to the
+  `@api` matcher.
+- **The API trusts `X-Forwarded-For` from anyone who can reach it** (rate limits are per that IP). That's
+  safe only because port 8080 is never published and Caddy overwrites the header. Don't add `ports:` to
+  the `api` service. It sits on an `internal` network with no Internet access; it needs none.
+- **Both containers are `read_only` with `cap_drop: ALL`.** Anything that writes files needs a `tmpfs` or a
+  volume; Caddy keeps only `NET_BIND_SERVICE`.
+- **`docker compose up -d` doesn't restart Caddy for a Caddyfile change**, so `deploy.sh` runs
+  `caddy reload`. The test job validates the Caddyfile and the compose file first.
+- **The frontend's CSP is a `<meta>` written by `vite.config.js` at build time** (`contentSecurityPolicy`),
+  because `connect-src` needs `VITE_API_BASE_URL`. Inline `<script>`s in `index.html` are hashed
+  automatically; a new external host (font, script, API) must be added there, and inline `style="…"` in
+  HTML strings would be blocked. `vercel.json` adds `frame-ancestors`, which a meta CSP can't set.
 - **Swagger is Development-only.** In the container (Production) `/swagger` is 404 on purpose.
 - **Don't serve the frontend from the backend again** (no `wwwroot`, `UseStaticFiles` or SPA fallback). The
   user asked for them to be separate.

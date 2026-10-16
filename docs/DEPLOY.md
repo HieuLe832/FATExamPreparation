@@ -122,6 +122,71 @@ Rồi mở `<VERCEL_URL>`: các hex dump phải tải được. Từ đây, mỗ
 
 ---
 
+## 6. Giữ credit Azure an toàn
+
+Gói **Azure for Students** không trừ tiền thẻ. Khi hết $100 credit hoặc hết 12 tháng, Azure **tắt** VM và
+subscription. Tiền chỉ bị trừ nếu bạn **nâng cấp lên Pay-As-You-Go**.
+
+1. **Kiểm tra gói.** Portal → **Subscriptions** → bấm vào subscription → mục **Offer** phải là
+   `Azure for Students`. Nếu là `Pay-As-You-Go` thì subscription đã gắn thẻ và không có giới hạn chi tiêu: làm
+   bước 3 ngay.
+2. **Không bấm Upgrade** khi Azure mời nâng cấp, trừ khi bạn muốn trả tiền.
+3. **Đặt budget để nhận email.** Portal → **Cost Management** → **Budgets** → **Add**: Reset period
+   `Monthly`, Amount `10` (USD). Phần Alert conditions: `Actual` 50 %, 80 %, 100 % và `Forecasted` 100 %, điền
+   email của bạn. Nếu Azure báo gói không hỗ trợ budget thì bỏ qua bước này và làm bước 4 mỗi tuần.
+4. **Xem credit còn lại** ở [microsoftazuresponsors.com](https://www.microsoftazuresponsors.com/) → **Balance**
+   (đăng nhập bằng tài khoản Azure for Students).
+5. **Xem cái gì đang tốn tiền.** **Cost Management** → **Cost analysis** → chọn view **Cost by resource**.
+
+   | Thấy trong danh sách | Nên là | Nếu khác |
+   | --- | --- | --- |
+   | Virtual machine | Size `B1s` | VM → **Size** → chọn `B1s` (đủ cho API này) |
+   | Disk của VM | `Standard SSD` | Stop VM → Disk → **Size + performance** → `Standard SSD` |
+   | Public IP | 1 IP Static | Giữ nguyên (cần cho tên miền) |
+   | Bastion | Không có | **Xóa** (trừ bản Developer): bản Basic tính theo giờ, hơn $100 một tháng |
+   | Microsoft Defender for Cloud | Tắt | Defender for Cloud → **Environment settings** → subscription → tắt các plan |
+   | Log Analytics workspace, Snapshot, Backup | Không có | Xóa nếu không dùng |
+
+6. **Khi không cần dùng** (ví dụ sau kỳ thi): VM → **Stop**. Trạng thái *Stopped (deallocated)* thì không tính
+   tiền máy, chỉ còn ổ đĩa và Public IP. Bấm **Start** khi cần; IP và tên miền giữ nguyên, API tự chạy lại.
+7. **Bật xác thực 2 bước (MFA)** cho tài khoản Microsoft dùng Azure và cho GitHub. Người lấy được mật khẩu Azure
+   có thể tạo máy ảo đắt tiền trên subscription của bạn.
+
+Những giới hạn đã có sẵn trong code, không cần làm gì:
+
+| Giới hạn | Giá trị | Ở đâu |
+| --- | --- | --- |
+| Request mỗi IP | 300 / phút (một lượt xem cả trang cần 6) | `RateLimits` trong `server/appsettings.json` |
+| Request tổng, mọi IP cộng lại | 1 800 / phút | như trên |
+| Vượt giới hạn | Trả `429`, trang báo đợi một phút | `server/Security/RateLimiting.cs` |
+| Trình duyệt giữ dữ liệu | 10 phút, không hỏi lại API | `HexDumpsController` |
+| Caddy chỉ cho qua | `GET`/`HEAD` tới `/api/...`; còn lại trả 404 | `deploy/vm/Caddyfile` |
+| Mỗi container | 0,5 CPU, 256 MB RAM, log tối đa 3 × 10 MB | `deploy/vm/docker-compose.yml` |
+| Container API | Chỉ đọc, không ra được Internet | như trên |
+
+Mỗi lần API trả một dump khoảng 0,7 KB. Dù bị gọi liên tục ở mức trần 1 800 / phút suốt một tháng thì cũng chỉ
+khoảng 55 GB, dưới 100 GB dữ liệu ra miễn phí mỗi tháng của Azure.
+
+---
+
+## 7. Khóa SSH trên VM
+
+Làm **một lần**, sau lần deploy đầu tiên có file `harden.sh` (workflow chép nó vào `/opt/fat-guide`):
+
+```bash
+ssh -i key.pem azureuser@<IP-của-VM> "bash /opt/fat-guide/harden.sh"
+```
+
+| Script làm | Để làm gì |
+| --- | --- |
+| Tắt đăng nhập SSH bằng mật khẩu và bằng `root` | Chỉ ai có file `.pem` mới vào được |
+| Cài `fail2ban` | Chặn IP đoán mật khẩu SSH nhiều lần |
+| Bật cập nhật bảo mật tự động của Ubuntu | Vá lỗi hệ điều hành mỗi ngày |
+
+Script dừng lại, không đổi gì, nếu VM chưa có SSH key (để bạn không bị khóa ngoài).
+
+---
+
 ## Lỗi thường gặp
 
 | Triệu chứng | Nguyên nhân | Cách sửa |
@@ -134,6 +199,8 @@ Rồi mở `<VERCEL_URL>`: các hex dump phải tải được. Từ đây, mỗ
 | Trang Vercel báo “Chưa tải được”, Console có chữ `CORS` | Secret `FRONTEND_ORIGIN` sai hoặc thừa `/` cuối | Ghi đè secret đó rồi chạy lại workflow |
 | Trang Vercel báo “Chưa tải được (HTTP 404)” | `VITE_API_BASE_URL` sai, ví dụ có thêm `/api` | Sửa biến trên Vercel rồi **Redeploy** |
 | Link preview của Vercel không tải được API | CORS chỉ cho phép domain chính | Bình thường; dùng domain chính |
+| Trang báo “HTTP 429” | Vượt giới hạn request, ví dụ cả lớp dùng chung một Wi-Fi | Đợi một phút; nếu hay gặp thì tăng `PerIpPerMinute` trong `server/appsettings.json` rồi push |
+| Trang Vercel trắng, Console có chữ `Content-Security-Policy` | Trang tải một địa chỉ ngoài danh sách cho phép | Thêm địa chỉ đó vào `contentSecurityPolicy` trong `client/vite.config.js` |
 
 Xem log trên VM:
 

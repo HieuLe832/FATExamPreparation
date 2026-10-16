@@ -12,6 +12,8 @@ docker image prune -f >/dev/null
 for _ in $(seq 1 30); do
   if docker compose exec -T caddy wget -qO- http://api:8080/api/health >/dev/null 2>&1; then
     echo "API is healthy: $(grep '^API_IMAGE=' .env | cut -d= -f2)"
+    # up -d only restarts Caddy when its container settings change, not when the Caddyfile does.
+    docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile
     exit 0
   fi
   sleep 2

@@ -7,6 +7,7 @@ namespace FatGuide.Api.Controllers;
 [ApiController]
 [Route("api/health")]
 [Produces("application/json")]
+[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class HealthController : ControllerBase
 {
     private readonly IHexDumpService _hexDumps;

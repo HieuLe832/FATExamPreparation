@@ -1,5 +1,39 @@
 # API_DOMAIN comes from docker-compose (.env). Caddy gets and renews the HTTPS certificate itself.
+# deploy.sh reloads this file on every deploy.
+{
+	servers {
+		# Close connections from clients that send a request very slowly, so they can't hold them open.
+		timeouts {
+			read_header 10s
+			read_body 10s
+			write 30s
+			idle 2m
+		}
+		max_header_size 16KB
+	}
+}
+
 {$API_DOMAIN} {
-	encode gzip
-	reverse_proxy api:8080
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		Content-Security-Policy "default-src 'none'; frame-ancestors 'none'"
+		-Server
+	}
+
+	# The guide only reads data (GET /api/...). Anything else, such as bots probing for /wp-admin or
+	# /.env, is answered here and never reaches the API.
+	@api {
+		method GET HEAD
+		path /api/*
+	}
+	handle @api {
+		reverse_proxy api:8080
+	}
+	handle {
+		respond 404
+	}
 }

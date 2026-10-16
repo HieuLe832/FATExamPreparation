@@ -9,7 +9,7 @@ export function fetchHexDump(id) {
   if (!cache.has(id)) {
     const request = fetch(`${API_BASE}/api/hex-dumps/${encodeURIComponent(id)}`)
       .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status });
         const d = await res.json();
         return { title: d.title, note: d.note, kind: d.kind, base: d.baseOffset, hex: d.rows };
       })

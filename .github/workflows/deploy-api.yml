@@ -18,7 +18,6 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 concurrency:
   group: deploy-api
@@ -27,6 +26,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -42,9 +42,21 @@ jobs:
           dotnet-version: "8.0.x"
       - run: dotnet build server/FatGuide.Api.csproj -c Release
 
+      # A broken Caddyfile or compose file would take the API offline, so check them before deploying.
+      - name: Check the VM stack files
+        run: |
+          API_IMAGE=x API_DOMAIN=api.example.com FRONTEND_ORIGIN=https://example.com \
+            docker compose -f deploy/vm/docker-compose.yml config -q
+          docker run --rm -e API_DOMAIN=api.example.com -v "$PWD/deploy/vm/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            caddy:2.8.4 caddy validate --config /etc/caddy/Caddyfile
+
   deploy:
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
     env:
       VM_HOST: ${{ secrets.VM_HOST }}
       VM_USER: ${{ secrets.VM_USER }}
@@ -91,7 +103,7 @@ jobs:
         run: |
           target="$VM_USER@$VM_HOST"
           printf 'API_IMAGE=%s\nAPI_DOMAIN=%s\nFRONTEND_ORIGIN=%s\n' "$IMAGE" "$API_DOMAIN" "$FRONTEND_ORIGIN" > deploy/vm/.env
-          scp -i ~/.ssh/vm deploy/vm/docker-compose.yml deploy/vm/Caddyfile deploy/vm/deploy.sh deploy/vm/.env "$target:/opt/fat-guide/"
+          scp -i ~/.ssh/vm deploy/vm/docker-compose.yml deploy/vm/Caddyfile deploy/vm/deploy.sh deploy/vm/harden.sh deploy/vm/.env "$target:/opt/fat-guide/"
           # The job token lets the VM pull this image; it is sent on stdin and expires when the job ends.
           printf '%s\n' "$GHCR_TOKEN" | ssh -i ~/.ssh/vm "$target" "docker login ghcr.io -u '${{ github.actor }}' --password-stdin"
           ssh -i ~/.ssh/vm "$target" "bash /opt/fat-guide/deploy.sh"

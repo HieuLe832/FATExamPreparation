@@ -1,5 +1,16 @@
 # Production stack on the Azure VM (copied to /opt/fat-guide by the deploy workflow).
 # The workflow writes /opt/fat-guide/.env with API_IMAGE, API_DOMAIN and FRONTEND_ORIGIN.
+#
+# Both containers run with a read-only file system and no Linux capabilities they don't need. CPU and
+# memory caps keep a flood of requests from freezing the VM (SSH stays usable), and log rotation keeps
+# logs from filling the disk.
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   api:
     image: ${API_IMAGE:?set API_IMAGE in .env}
@@ -8,8 +19,22 @@ services:
       Cors__AllowedOrigins__0: ${FRONTEND_ORIGIN:?set FRONTEND_ORIGIN in .env}
     expose:
       - "8080"
+    # Only Caddy can reach the API, and the API can't reach the Internet.
+    networks:
+      - internal
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    cpus: 0.5
+    mem_limit: 256m
+    pids_limit: 100
+    logging: *logging
 
-  # Terminates HTTPS with an automatic Let's Encrypt certificate and forwards to the API.
+  # Terminates HTTPS with an automatic Let's Encrypt certificate and forwards API requests.
   caddy:
     image: caddy:2.8.4
     restart: unless-stopped
@@ -24,6 +49,28 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+    networks:
+      - edge
+      - internal
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    cpus: 0.5
+    mem_limit: 256m
+    pids_limit: 100
+    logging: *logging
+
+networks:
+  # Internet side: published ports 80/443, and Let's Encrypt for the certificate.
+  edge:
+  internal:
+    internal: true
 
 volumes:
   caddy_data:

@@ -8,6 +8,8 @@ namespace FatGuide.Api.Controllers;
 [ApiController]
 [Route("api/hex-dumps")]
 [Produces("application/json")]
+// The dumps only change with a deploy: the browser keeps them for 10 minutes instead of asking again.
+[ResponseCache(Duration = 600, Location = ResponseCacheLocation.Client)]
 public sealed class HexDumpsController : ControllerBase
 {
     private readonly IHexDumpService _hexDumps;

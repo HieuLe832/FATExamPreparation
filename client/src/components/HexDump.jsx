@@ -15,7 +15,7 @@ export function useDump(id) {
     setState({ status: "loading" });
     fetchHexDump(id)
       .then((dump) => alive && setState({ status: "ready", dump }))
-      .catch((err) => alive && setState({ status: "error", message: err.message }));
+      .catch((err) => alive && setState({ status: "error", message: err.message, httpStatus: err.status }));
     return () => { alive = false; };
   }, [id, attempt]);
   return { ...state, retry: () => setAttempt((n) => n + 1) };
@@ -40,9 +40,11 @@ export default function HexDump({ id, focus, list, bands, from, to }) {
           <>
             <span>Chưa tải được hex dump ({s.message}).</span>
             <span className="muted">
-              {import.meta.env.DEV
-                ? <>Chạy backend bằng <b>dotnet run --project server</b> rồi bấm thử lại.</>
-                : "Không kết nối được máy chủ, có thể nó đang cập nhật. Đợi vài giây rồi bấm thử lại."}
+              {s.httpStatus === 429
+                ? "Máy chủ đang nhận quá nhiều yêu cầu. Đợi một phút rồi bấm thử lại."
+                : import.meta.env.DEV
+                  ? <>Chạy backend bằng <b>dotnet run --project server</b> rồi bấm thử lại.</>
+                  : "Không kết nối được máy chủ, có thể nó đang cập nhật. Đợi vài giây rồi bấm thử lại."}
             </span>
             <button type="button" className="retry" onClick={s.retry}>Thử lại</button>
           </>
