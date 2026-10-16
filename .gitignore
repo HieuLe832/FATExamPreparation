@@ -8,3 +8,4 @@ server/obj/
 supabase password
 *.env
 .env*
+!.env.example

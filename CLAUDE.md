@@ -72,6 +72,23 @@ docker run --rm -p 8080:8080 fat-guide-api     # http://localhost:8080/api/hex-d
 cd client && API_PROXY_TARGET=http://localhost:8080 npm run dev   # point the dev frontend at the container
 ```
 
+## Environment variables
+
+There are no `.env` files in the repo; only `client/.env.example` (a template, tracked via `!.env.example`).
+
+| Where | How it's set | Variables |
+| --- | --- | --- |
+| Frontend, local | `client/.env.local` (gitignored) or the shell | `API_PROXY_TARGET` (Vite proxy target, default `http://localhost:5080`), `VITE_API_BASE_URL` (leave empty) |
+| Frontend, Vercel | Project Settings → Environment Variables | `VITE_API_BASE_URL=https://<azure-app>` (build time) |
+| Backend, local | `appsettings.Development.json` + `launchSettings.json` | `Cors:AllowedOrigins`, `ASPNETCORE_ENVIRONMENT=Development`, port 5080 |
+| Backend, Azure | Web App → Environment variables → App settings | `Cors__AllowedOrigins__0=https://<project>.vercel.app` |
+| Backend, Docker | `docker run -e …` | `Cors__AllowedOrigins__0=…`; `ASPNETCORE_URLS` is set in the Dockerfile |
+| GitHub Actions | repo secret + workflow `env:` | `AZURE_WEBAPP_PUBLISH_PROFILE` (secret), `AZURE_WEBAPP_NAME` |
+
+ASP.NET does not read `.env` files; use appsettings, environment variables or `dotnet user-secrets`. Any
+future secret (e.g. a Supabase connection string) goes in user-secrets locally and Azure App Settings,
+never in the repo.
+
 ## Conventions
 
 - UI language is Vietnamese with full diacritics.
@@ -109,6 +126,8 @@ cd client && API_PROXY_TARGET=http://localhost:8080 npm run dev   # point the de
 - **CORS origins come from config** (`Cors:AllowedOrigins`). Development allows `http://localhost:5173`;
   production allows none. Add the real frontend origin there when the frontend is deployed, or set
   `VITE_API_BASE_URL` at frontend build time if the API lives on another host.
+- **`vite.config.js` must use `loadEnv`** to read `API_PROXY_TARGET`. Vite only puts `.env` values into
+  `import.meta.env`, not into `process.env` of the config, so a plain `process.env` read ignores `.env.local`.
 - **`VITE_API_BASE_URL` is baked in at build time.** Changing it on Vercel needs a redeploy. Use the origin
   only (`https://x.azurewebsites.net`), no `/api`; a trailing slash is stripped in `api/hexDumps.js`.
 - **CORS origins must match exactly** (scheme, host, no trailing slash). On Azure they're App Settings named
