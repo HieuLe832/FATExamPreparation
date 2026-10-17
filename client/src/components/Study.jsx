@@ -124,6 +124,16 @@ export function Final({ title, children }) {
   );
 }
 
+/** Baitap_HTTT quoted as text, in its own words: the question, the dumps it gives, its blank answer table. */
+export function Exam({ children }) {
+  return (
+    <figure className="exam">
+      <figcaption className="exam-label">Đề bài</figcaption>
+      {children}
+    </figure>
+  );
+}
+
 /** The same steps applied to Baitap_HTTT. */
 export function Real({ children }) {
   return <div className="real">{children}</div>;

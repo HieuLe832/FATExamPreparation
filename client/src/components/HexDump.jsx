@@ -54,7 +54,16 @@ export default function HexDump({ id, focus, list, bands, from, to }) {
   );
 }
 
-function HexDumpView({ d, focus, list, bands, from, to }) {
+/**
+ * A dump of Baitap_HTTT (src/fat/baitap.json), bundled with the page so it needs no API call. `bare` leaves
+ * out the title, for a dump quoted under the exam's own sentence ("Nội dung phần đầu của sector 38 như sau:").
+ */
+export function StaticDump({ dump, bare, bands, from, to }) {
+  const d = useMemo(() => ({ title: dump.title, kind: dump.kind, base: dump.baseOffset, hex: dump.rows }), [dump]);
+  return <HexDumpView d={d} bare={bare} bands={bands} from={from} to={to} />;
+}
+
+function HexDumpView({ d, bare, focus, list, bands, from, to }) {
   const bytes = useMemo(() => parseHex(d.hex), [d]);
   const firstRow = from === undefined ? 0 : (from - d.base) / 16;
   const lastRow = to === undefined ? bytes.length / 16 - 1 : (to - d.base) / 16;
@@ -90,7 +99,7 @@ function HexDumpView({ d, focus, list, bands, from, to }) {
 
   return (
     <div className="dump">
-      <h4 className="dump-title">{d.title}</h4>
+      {!bare && <h4 className="dump-title">{d.title}</h4>}
       <div className="hexwrap">
         <div className="hex" role="img" aria-label={`Hex dump: ${d.title}`}>
           <div className="row colhead" aria-hidden="true">

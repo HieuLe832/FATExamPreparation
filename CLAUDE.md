@@ -32,7 +32,9 @@ giờ bấm vào các ô để xem"). So:
 - **Mini first, real right after, same page.** Each question page solves the mini disk
   (`server/Data/hex-dumps.json`, round numbers) step by step, then applies the same steps to Baitap_HTTT in
   a violet `<Real>` block from `RealExercise.jsx` (byte locations as printed in the PDF, arithmetic shown,
-  final answer). Explain FAT with analogies: directory = mục lục, FAT = linked list.
+  final answer). The block first quotes the exam as text in `<Exam>` ("Đề bài": its sentences, the dumps
+  from `baitap.json` via `StaticDump`, its blank answer tables); the user rejected answers without the
+  question. Explain FAT with analogies: directory = mục lục, FAT = linked list.
 
 ## Stack
 
@@ -65,7 +67,7 @@ giờ bấm vào các ô để xem"). So:
 | `client/src/fat/dumps.js` | Mini disk layout constants (data start 10, 2 sectors/cluster, FAT1 at sector 6) and `parseHex` |
 | `client/src/fat/annotate.js` | Pure decoders (MBR, boot sector, FAT32 cells, directory entries) and the static notes under dumps (`focusNotes`, `entryRows`, `fatCells`) |
 | `client/src/fat/annotate.test.js` | Pins the mini dumps to the answers shown on the page |
-| `client/src/fat/baitap.fixture.json`, `baitap.test.js` | Dumps transcribed from Baitap_HTTT.pdf (test data only) and the test that pins every number in `RealExercise.jsx` |
+| `client/src/fat/baitap.json`, `baitap.test.js` | Dumps transcribed from Baitap_HTTT.pdf, as many rows as the PDF prints (quoted on the pages, bundled, no API call) and the test that pins every number in `RealExercise.jsx` |
 | `client/src/components/` | `HexDump` (coloured dump + list), `Calculators`, shared `Study` blocks |
 | `client/src/sections/` | `Start`, `HexSkills`, `DiskOverview`, `Mbr` (câu 1), `Boot` (2a), `Fat` (2b), `Tree` (2b), `Operations` (2c–e), `RealExercise` (real-exercise block per question), `Lookup` (memorise blocks for the Bảng tra column), `Reference` (Bảng phải thuộc + lỗi hay gặp), `Glossary` (+ calculators) |
 | `client/vercel.json` | Vercel build settings and security headers |
@@ -115,13 +117,14 @@ never in the repo.
   "Mang vào phòng thi trong đầu", "Sẵn sàng?" and book analogies like "phần ruột cuốn sách" cringe. Section tags
   are just the group name or the exam question (Bắt đầu, Nền tảng, Câu 2a, Ôn tập).
 - **No slide images or slide-number references.** The user found the crops hard to read. Show what's
-  needed directly as text and small tables.
+  needed directly as text and small tables. The same holds for the exam: quote it as typed text, never a
+  crop of the PDF.
 - The app shows **one page per screen** (hash routing in `App.jsx`: `#cau-1`, `#cau-2a`, …; old hashes
   are redirected in `OLD_HASHES`) with a course outline, progress saved in `localStorage`
   (`fat-guide:done`), and Trước/Tiếp at the bottom. New pages are added to `GROUPS` in `App.jsx`.
 - Every question page has the same skeleton: `<PageHead>` → `<Ask>` (đề cho / đề hỏi, in the exam's words)
   → `<DiskStrip>` → "Hiểu nhanh" → "Cách giải" `<Recipe>` → "Làm mẫu trên đề mini" (`<Known>`, `<Steps>`,
-  `<Final>`) → "Làm trên đề thật" (`<RealX />`) → "Dễ sai" `<Traps>`. Keep that order on new pages.
+  `<Final>`) → "Làm trên đề thật" (`<RealX />`: `<Exam>` quote, then the answer) → "Dễ sai" `<Traps>`. Keep that order on new pages.
 - Each worked step reads top to bottom: 1–2 sentences → its own `<HexDump>` showing only the rows it needs
   → a visible `<Result>` or `<Calc>`. Never put one dump at the top of a page for the steps to point back to.
 - **Keep prose short. The user rejected a wordy version as hard to understand.** No paragraph longer than 2

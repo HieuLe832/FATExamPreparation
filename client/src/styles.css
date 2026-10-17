@@ -175,6 +175,13 @@ mark.must { background: var(--must); color: inherit; padding: 0.04em 0.28em; bor
 .real > * { min-width: 0; }
 .real h3 { margin-top: 8px; color: var(--real); }
 .real .final { background: var(--surface); }
+.exam { margin: 0; display: grid; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--real); border-radius: 0 12px 12px 0; padding: 14px 18px; min-width: 0; }
+.exam > * { min-width: 0; margin: 0; }
+.exam-label { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--real); }
+.exam ul, .exam ol { padding-left: 1.4em; }
+.exam .hexwrap { box-shadow: none; }
+.exam-gap { color: var(--muted); font-style: italic; }
+table.t.blank td { height: 1.2em; }
 .real .t td, .real .t th { border-bottom-color: color-mix(in srgb, var(--line) 70%, var(--real)); }
 
 .traps { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; max-width: 76ch; }

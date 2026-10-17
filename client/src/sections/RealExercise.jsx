@@ -1,7 +1,9 @@
-// Worked answers for Baitap_HTTT, one block per exam question, shown at the end of each question page.
-// Hand-written from the transcribed dumps in src/fat/baitap.fixture.json; src/fat/baitap.test.js pins
-// the numbers used here. Offsets are the absolute ones printed in the PDF, so they can be found there.
-import { Calc, DiskMap, Final, ImpactTable, Known, Real, Result, Table, Tree } from "../components/Study.jsx";
+// Baitap_HTTT, one block per exam question, shown at the end of each question page: the exam quoted as
+// text (<Exam>, dumps from src/fat/baitap.json), then the worked answer. The answers are hand-written;
+// src/fat/baitap.test.js pins the numbers used here. Offsets are the absolute ones printed in the PDF.
+import { StaticDump } from "../components/HexDump.jsx";
+import { Calc, DiskMap, Exam, Final, ImpactTable, Known, Real, Result, Table, Tree } from "../components/Study.jsx";
+import BAITAP from "../fat/baitap.json";
 
 const n = (label) => ({ label, cls: "n" });
 const mono = (s) => <span className="mono">{s}</span>;
@@ -9,10 +11,65 @@ const nw = (s) => <span className="mono nw">{s}</span>;
 const sub = (s) => <span className="sub">{s}</span>;
 const SB = <>S<sub>B</sub></>, SC = <>S<sub>C</sub></>, NF = <>N<sub>F</sub></>, SF = <>S<sub>F</sub></>;
 
+const DUMPS = Object.fromEntries(BAITAP.map((d) => [d.id, d]));
+
+/** "• Nội dung phần đầu của sector … như sau:" and the dump under it, as bài tập 2 prints them. */
+function SectorDump({ id, sector }) {
+  return (
+    <>
+      <ul><li>Nội dung phần đầu của sector {sector} như sau:</li></ul>
+      <StaticDump dump={DUMPS[id]} bare />
+    </>
+  );
+}
+
+/** The blank table that questions c, d, e ask to fill in. */
+function BlankImpact() {
+  return (
+    <Table
+      className="blank"
+      head={["", "Không thay đổi", "Thay đổi (ghi rõ chỉ số sector bị thay đổi)"]}
+      rows={["FAT", "RDET", "SDET", "Data"].map((r) => [<b>{r}</b>, "", ""])}
+    />
+  );
+}
+
+/** Question c, d or e: the command, then the two rules for filling in the table. */
+function OpQuestion({ letter, command }) {
+  return (
+    <Exam>
+      <p>{letter}) Sau khi thực hiện lệnh {command}, hãy cho biết thao tác này ảnh hưởng như thế nào tới các vùng trên Volume:</p>
+      <ol type="i">
+        <li>Nếu không thay đổi đánh dấu “x” vào cột Không thay đổi</li>
+        <li>Nếu thay đổi, ghi rõ chỉ số sector thay đổi. Nếu cả vùng thay đổi thì ghi vào “tất cả”</li>
+      </ol>
+      <BlankImpact />
+    </Exam>
+  );
+}
+
+const TREE_QUESTION = "b) Vẽ cây thư mục của Volume trên và cho biết các thông số (thuộc tính trạng thái, kích thước, danh sách các sector chứa dữ liệu) của từng tập tin, thư mục";
+
+// Rows of the volume table in question a, in the exam's words.
+const VOLUME_ROWS = [
+  "Loại FAT", "Số byte cho 1 sector", "Số sector vùng Bootsector", "Số lượng bảng FAT", "Số sector cho 1 bảng FAT",
+  "Dung lượng đĩa (KB/MB/GB)", "Sector đầu tiên của bảng FAT1", "Sector đầu tiên của bảng RDET",
+  "Sector đầu tiên của vùng Data", "Số sector cho 1 cluster",
+];
+
+// The 4 rows of the partition table: 1BE, 1CE, 1DE, 1EE, 16 bytes each.
+const PARTITION_ROWS = [0, 1, 2, 3].map((p) => [0x1be + p * 16, 16]);
+
 export function RealMbr() {
   return (
     <Real>
-      <p>Bảng phân vùng là 4 dòng 16 byte cuối dump, bắt đầu ở dòng <code>000001B0</code>, cột <code>E</code>.</p>
+      <Exam>
+        <p><b>Bài tập 1:</b> Cho thông tin Master boot sector của một ổ cứng như sau:</p>
+        <StaticDump dump={DUMPS.mbr} bare />
+        <p>Hãy cho biết ổ cứng này được chia làm mấy phân vùng, loại và dung lượng của từng phân vùng. Phân vùng nào là phân vùng khởi động?</p>
+      </Exam>
+      <p>Bảng phân vùng là 4 dòng 16 byte cuối sector, bắt đầu ở dòng <code>000001B0</code>, cột <code>E</code> (cùng màu là cùng một dòng).</p>
+      <StaticDump dump={DUMPS.mbr} from={0x1b0} to={0x1f0} bands={PARTITION_ROWS} />
       <Table
         head={["Dòng", "+0 khởi động", "+4 loại", "+C số sector (đảo)", n("Số sector"), n("Dung lượng")]}
         rows={[
@@ -31,6 +88,13 @@ export function RealMbr() {
 export function RealBoot() {
   return (
     <Real>
+      <Exam>
+        <p><b>Bài tập 2:</b> Cho một Volume cùng với các thông tin:</p>
+        <SectorDump id="boot" sector={0} />
+        <p className="exam-gap">Đề cho tiếp phần đầu của sector 38, 1664, 1736 và 1756; các dump này chép ở câu 2b.</p>
+        <p>a) Xác định thông tin Volume</p>
+        <Table className="blank" head={["STT", "Nội dung", "Giá trị"]} rows={VOLUME_ROWS.map((r, i) => [i + 1, r, ""])} />
+      </Exam>
       <Table
         head={["STT", "Nội dung", "Byte trong đề (sector 0)", n("Giá trị")]}
         rows={[
@@ -63,8 +127,12 @@ const REAL_CELLS = [
 export function RealFat() {
   return (
     <Real>
+      <Exam>
+        <SectorDump id="fat" sector={38} />
+        <p>{TREE_QUESTION}</p>
+      </Exam>
       <Known from="câu 2a" items={[[SC, 4], ["Data", 1664], ["FAT1", "sector 38"]]} />
-      <p>Dump bảng FAT bắt đầu ở offset <code>4C00</code>, nên ô k ở <code>4C00</code> + 4k. Ví dụ ô 6 ở <code>4C18</code> (dòng <code>00004C10</code>, cột 8–B): <code>07 00 00 00</code> → 7.</p>
+      <p>Sector 38 là đầu FAT1. Dump bắt đầu ở offset <code>4C00</code>, nên ô k ở <code>4C00</code> + 4k. Ví dụ ô 6 ở <code>4C18</code> (dòng <code>00004C10</code>, cột 8–B): <code>07 00 00 00</code> → 7.</p>
       <DiskMap label="Ô 2 đến 25 của bảng FAT đề thật" cells={REAL_CELLS} />
       <Table
         head={["Cluster đầu", "Chuỗi", "Sector = 1664 + (k − 2) × 4", "Của (xem trang sau)"]}
@@ -106,8 +174,10 @@ function RealEntries({ rows }) {
 export function RealTree() {
   return (
     <Real>
+      <Exam><p>{TREE_QUESTION}</p></Exam>
       <Known from="câu 2a và bảng FAT" items={[["Data", 1664], [SC, 4], ["chuỗi cluster", "trang trước"]]} />
       <h3>RDET · sector 1664</h3>
+      <Exam><SectorDump id="rdet" sector={1664} /></Exam>
       <RealEntries rows={[
         ["D0000", "4E", "08", "tên ổ “NEW VOLUME”", true],
         ["D0020", "45", "20", <>tập tin <b>EXTERNAL.DLL</b> · cluster 06 = 6 · kích thước 00001E00 = 7 680 byte</>],
@@ -122,6 +192,7 @@ export function RealTree() {
         ["D0140", "00", "", "hết bảng"],
       ]} />
       <h3>SDET của TMC1 · cluster 20 → sector 1664 + 18 × 4 = 1736</h3>
+      <Exam><SectorDump id="tmc1" sector={1736} /></Exam>
       <RealEntries rows={[
         ["D9000", "2E", "10", "“.”: chính thư mục này", true],
         ["D9020", "2E", "10", "“..”: thư mục cha", true],
@@ -132,6 +203,7 @@ export function RealTree() {
         ["D90C0", "00", "", "hết bảng"],
       ]} />
       <h3>SDET của TMC2 · cluster 25 → sector 1756</h3>
+      <Exam><SectorDump id="tmc2" sector={1756} /></Exam>
       <p>Chỉ có “.” và “..”: thư mục rỗng.</p>
 
       <Final title="Đáp án câu 2b (đề thật)">
@@ -160,14 +232,17 @@ export function RealOps() {
     <Real>
       <Known from="câu 2a, 2b" items={[["FAT1", 38], ["FAT2", 851], ["RDET", 1664], ["TMC1", 1736], ["TMC2", 1756], ["ô trống đầu", "11, 12"]]} />
       <h3>2c · MOVE “Ext Superblock.tpl” vào TMC2</h3>
+      <OpQuestion letter="c" command={<>MOVE tập tin “.tpl” vào thư mục TMC2</>} />
       <p>Tập tin có 3 entry (2 mảnh tên + entry chính) ở <code>D00A0</code>–<code>D00FF</code>, đều trong sector 1664: đánh E5. TMC2 thêm 3 entry ngay sau “..”, ở <code>DB840</code>–<code>DB89F</code>: sector 1756.</p>
       <ImpactTable rdet={<b>1664</b>} sdet={<><b>1756</b> (TMC2)</>} />
 
       <h3>2d · XÓA “Sample script.whs”</h3>
+      <OpQuestion letter="d" command={<>XÓA tập tin “.whs”</>} />
       <p>3 entry ở <code>D9040</code>–<code>D909F</code> (TMC1, sector 1736): đánh E5. Ô FAT 21, 22 về 0; byte 4 × 21 = 84 và 4 × 22 = 88 đều nhỏ hơn 512, nên nằm ở sector 38 (FAT1) và 851 (FAT2).</p>
       <ImpactTable fat={<><b>38</b> và <b>851</b></>} sdet={<><b>1736</b> (TMC1)</>} />
 
       <h3>2e · COPY “TIMEZONE.DAT” vào thư mục gốc</h3>
+      <OpQuestion letter="e" command={<>COPY tập tin “.DAT” vào thư mục gốc (RDET)</>} />
       <p>2 400 byte; 1 cluster = 4 × 512 = 2 048 byte, nên cần 2 cluster: lấy 2 ô trống đầu tiên là 11, 12. Ô 11 ghi 12, ô 12 ghi “hết” (sector 38 và 851).</p>
       <Calc>cluster 11 = 1664 + 9 × 4 = 1700 → 1700–1703; cluster 12 → 1704–1707</Calc>
       <p>RDET thêm 1 entry ở chỗ trống <code>D0140</code>: sector 1664. Tên TIMEZONE.DAT vừa 8 + 3 ký tự nên không cần mảnh tên dài.</p>

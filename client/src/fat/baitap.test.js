@@ -1,16 +1,23 @@
 // Pins the worked answers for the real exercise (sections/RealExercise.jsx) to the dumps transcribed from
-// Baitap_HTTT.pdf (baitap.fixture.json). Run: npm test
+// Baitap_HTTT.pdf (baitap.json, also quoted on the pages). Run: npm test
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { parseHex } from "./dumps.js";
 import { decodeEntry, le } from "./annotate.js";
 
-const json = JSON.parse(readFileSync(new URL("./baitap.fixture.json", import.meta.url), "utf8"));
+const json = JSON.parse(readFileSync(new URL("./baitap.json", import.meta.url), "utf8"));
 const D = Object.fromEntries(json.map((d) => [d.id, { base: d.baseOffset, b: parseHex(d.rows) }]));
 const at = (id, abs) => abs - D[id].base; // absolute offset in the PDF → index in the dump
 const SB = 38, NF = 2, SF = 813, SC = 4, DATA = SB + NF * SF;
 const sectors = (k) => [DATA + (k - 2) * SC, DATA + (k - 2) * SC + SC - 1];
+
+test("dumps cover what the exam prints", () => {
+  assert.equal(D.mbr.b.length, 512); // the whole sector, as in the PDF
+  assert.deepEqual([D.mbr.b[510], D.mbr.b[511]], [0x55, 0xaa]);
+  assert.deepEqual(json.map((d) => d.rows.length), [32, 7, 10, 22, 14, 6]);
+  for (const d of json) assert.ok(d.rows.every((r) => r.split(" ").length === 16), d.id);
+});
 
 test("bài 1: 4 partitions, #2 active NTFS", () => {
   const { b } = D.mbr;
