@@ -36,6 +36,16 @@ giờ bấm vào các ô để xem"). So:
   from `baitap.json` via `StaticDump`, its blank answer tables); the user rejected answers without the
   question. Explain FAT with analogies: directory = mục lục, FAT = linked list.
 
+**Second topic: process scheduling (Quản lý tiến trình).** The same app also teaches just enough of
+`Bai03_Quan_ly_tien_trinh.pdf` to solve `Baitap_QLTT.pdf`: bài 1 (CPU by preemptive SJF, device R1 by FIFO,
+one instance per device, WT per process) and bài 2 (preemptive SJF over 3 CPU bursts, I/O with no device, so
+I/O runs in parallel). Group "Quản lý tiến trình" in `GROUPS`: `ProcBasics` (SJF and Gantt, single-burst
+lecture exercise), `ProcPlain` (bài 2, taught first because it is bài 1 without device queues), `ProcDevice`
+(bài 1, mini = the lecture's CPU-SJF/IO-FCFS example). Same page skeleton as the FAT pages minus `<DiskStrip>`
+and `<Known>`. WT follows the lecture: time in the Ready List only (not I/O, not device queues); each page
+shows the check WT = end − arrive − CPU − I/O − device queue. Ties: a running process keeps the CPU on equal
+time; otherwise the one that entered the RL first.
+
 ## Stack
 
 - Frontend: React 18 + Vite in `client/`.
@@ -68,8 +78,10 @@ giờ bấm vào các ô để xem"). So:
 | `client/src/fat/annotate.js` | Pure decoders (MBR, boot sector, FAT32 cells, directory entries) and the static notes under dumps (`focusNotes`, `entryRows`, `fatCells`) |
 | `client/src/fat/annotate.test.js` | Pins the mini dumps to the answers shown on the page |
 | `client/src/fat/baitap.json`, `baitap.test.js` | Dumps transcribed from Baitap_HTTT.pdf, as many rows as the PDF prints (quoted on the pages, bundled, no API call) and the test that pins every number in `RealExercise.jsx` |
-| `client/src/components/` | `HexDump` (coloured dump + list), `Calculators`, shared `Study` blocks |
-| `client/src/sections/` | `Start`, `HexSkills`, `DiskOverview`, `Mbr` (câu 1), `Boot` (2a), `Fat` (2b), `Tree` (2b), `Operations` (2c–e), `RealExercise` (real-exercise block per question), `Lookup` (memorise blocks for the Bảng tra column), `Reference` (Bảng phải thuộc + lỗi hay gặp), `Glossary` (+ calculators) |
+| `client/src/components/` | `HexDump` (coloured dump + list), `Calculators`, shared `Study` blocks, `Schedule` (process table, event list, Gantt chart, WT table) |
+| `client/src/proc/exercises.js` | Process tables (mini and Baitap_QLTT) with hand-written answers: Gantt segments, RL waits, WT, event list |
+| `client/src/proc/sjf.js`, `sjf.test.js` | Preemptive SJF + FIFO device simulator, used only by the test that pins every answer in `exercises.js` |
+| `client/src/sections/` | `Start`, `HexSkills`, `DiskOverview`, `Mbr` (câu 1), `Boot` (2a), `Fat` (2b), `Tree` (2b), `Operations` (2c–e), `RealExercise` (real-exercise block per question), `ProcBasics`, `ProcPlain`, `ProcDevice`, `ProcReal` (Baitap_QLTT blocks), `Lookup` (memorise blocks for the Bảng tra column), `Reference` (Bảng phải thuộc + lỗi hay gặp), `Glossary` (+ calculators) |
 | `client/vercel.json` | Vercel build settings and security headers |
 | `deploy/vm/` | VM stack: `docker-compose.yml` (api + caddy), `Caddyfile`, `deploy.sh` (run by CD), `setup.sh` (one-time Docker install), `harden.sh` (one-time SSH lockdown, fail2ban, auto updates) |
 | `.github/workflows/deploy-api.yml` | CD for the API to the VM |
@@ -81,7 +93,7 @@ giờ bấm vào các ô để xem"). So:
 dotnet run --project server       # API at http://localhost:5080, Swagger at /swagger (Development)
 cd client && npm install          # once
 cd client && npm run dev          # http://localhost:5173, proxies /api to localhost:5080
-cd client && npm test             # decoder tests (node:test), read server/Data/hex-dumps.json
+cd client && npm test             # decoder tests (node:test, read server/Data/hex-dumps.json) + SJF schedule tests
 cd client && npm run build        # static files in client/dist
 ```
 
@@ -214,6 +226,8 @@ never in the repo.
   labels only; diacritics look cramped in mono headings.
 - **2c, 2d, 2e each start from the original mini disk**, as in the real exercise. Offsets in their answers
   (entry 1420, 2040, 2060…) assume that.
+- **Process answers live in `client/src/proc/exercises.js`**, pinned by `sjf.test.js` against the simulator.
+  The `<Calc>` lines and `<Result>` texts in `Proc*.jsx` repeat those numbers; change them together.
 - **Real-exercise answers live only in `RealExercise.jsx`**, one exported block per question. Every
   number there is pinned by `baitap.test.js` against the transcribed dumps; change both together.
 - FAT-specific traps for the user (little-endian, cluster numbering from 2, no S_RDET on FAT32, FAT2 copy,

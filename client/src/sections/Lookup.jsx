@@ -121,6 +121,42 @@ function OpsFacts() {
   );
 }
 
+function SjfFacts() {
+  return (
+    <Facts stack rows={[
+      ["Chọn", "tiến trình còn lại ít nhất trong lượt CPU hiện tại (tính cả tiến trình đang chạy)"],
+      ["Xét lại khi", "có tiến trình vào RL (mới đến hoặc xong I/O), hoặc tiến trình đang chạy xong lượt"],
+      ["Giành CPU", "chỉ khi ngắn hơn hẳn. Bằng nhau: tiến trình đang chạy giữ CPU; CPU rảnh: ai vào RL trước"],
+      ["Còn lại", "CPU của lượt − phần đã chạy"],
+      ["Xong lượt CPU", "đi I/O (giờ về = bây giờ + thời gian I/O), hết cột thì kết thúc"],
+      ["Không ai cần CPU", "ô trống trên Gantt"],
+    ]} />
+  );
+}
+
+function IoFacts() {
+  return (
+    <Facts stack rows={[
+      ["Bài 2: không ghi thiết bị", "I/O các tiến trình chạy song song, không chờ nhau"],
+      ["Bài 1: R1, R2 (FIFO)", "mỗi thiết bị 1 cái; rảnh → dùng ngay; bận → xếp cuối hàng chờ"],
+      ["Xong thiết bị", "quay lại RL; thiết bị chuyển ngay cho tiến trình đầu hàng"],
+      ["Thời gian 0, Null", "không có lượt đó"],
+      ["Thiết bị", "không bị giành giữa chừng"],
+    ]} />
+  );
+}
+
+function WtFacts() {
+  return (
+    <Facts stack rows={[
+      ["WT", "tổng các khoảng nằm trong RL (chờ CPU)"],
+      ["Không tính", "lúc chạy CPU, lúc làm I/O, lúc xếp hàng chờ thiết bị"],
+      ["Kiểm tra", "WT = kết thúc − vào − tổng CPU − tổng I/O − thời gian xếp hàng chờ thiết bị"],
+      ["Trung bình", "tổng WT ÷ số tiến trình"],
+    ]} />
+  );
+}
+
 /** Numbers found in câu 2a (and 2b with `full`), for the mini disk and for Baitap_HTTT. */
 function KnownNumbers({ full }) {
   const rows = [
@@ -144,6 +180,9 @@ export const LOOKUPS = {
   fat: { title: "Câu 2b · Bảng FAT", Body: FatFacts },
   dir: { title: "Câu 2b · Thư mục", Body: DirFacts },
   ops: { title: "Câu 2c–e · MOVE, XÓA, COPY", Body: OpsFacts },
+  sjf: { title: "Tiến trình · SJF không độc quyền", Body: SjfFacts },
+  io: { title: "Tiến trình · I/O và thiết bị", Body: IoFacts },
+  wt: { title: "Tiến trình · Thời gian chờ", Body: WtFacts },
 };
 
 /** The blocks listed in a page's `lookup`, for the side column. */

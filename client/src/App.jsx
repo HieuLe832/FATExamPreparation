@@ -7,12 +7,16 @@ import Boot from "./sections/Boot.jsx";
 import Fat from "./sections/Fat.jsx";
 import Tree from "./sections/Tree.jsx";
 import Operations from "./sections/Operations.jsx";
+import ProcBasics from "./sections/ProcBasics.jsx";
+import ProcPlain from "./sections/ProcPlain.jsx";
+import ProcDevice from "./sections/ProcDevice.jsx";
 import MustKnow from "./sections/Reference.jsx";
 import Glossary from "./sections/Glossary.jsx";
 import { LookupBlocks } from "./sections/Lookup.jsx";
 
-// One page is shown at a time; the URL hash (#cau-1, #cau-2a, …) says which. The course follows the exam:
-// two foundation pages, then one page per exam question, then the review sheet. `lookup` lists the
+// One page is shown at a time; the URL hash (#cau-1, #cau-2a, …) says which. The course follows the exams:
+// for Baitap_HTTT two foundation pages, then one page per exam question; for Baitap_QLTT one foundation page,
+// then one page per exercise (bài 2 first, it is bài 1 without device queues); then the review sheet. `lookup` lists the
 // Lookup.jsx blocks shown in the "Bảng tra" column next to the page.
 const GROUPS = [
   { name: "Bắt đầu", steps: [
@@ -28,6 +32,11 @@ const GROUPS = [
     { id: "cau-2b-fat", label: "Câu 2b · Bảng FAT", Page: Fat, lookup: ["known", "fat", "hex"] },
     { id: "cau-2b-cay", label: "Câu 2b · Cây thư mục", Page: Tree, lookup: ["known", "dir", "fat"] },
     { id: "cau-2cde", label: "Câu 2c–e · Move, Xóa, Copy", Page: Operations, lookup: ["knownFull", "ops"] },
+  ] },
+  { name: "Quản lý tiến trình", steps: [
+    { id: "tt-sjf", label: "SJF và sơ đồ Gantt", Page: ProcBasics, lookup: ["sjf", "wt"] },
+    { id: "tt-bai-2", label: "Bài 2 · SJF nhiều lần CPU", Page: ProcPlain, lookup: ["sjf", "io", "wt"] },
+    { id: "tt-bai-1", label: "Bài 1 · CPU và thiết bị R1", Page: ProcDevice, lookup: ["sjf", "io", "wt"] },
   ] },
   { name: "Ôn tập", steps: [
     { id: "phai-thuoc", label: "Bảng phải thuộc", Page: MustKnow },
@@ -143,7 +152,7 @@ export default function App() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [lookupOpen]);
-  useEffect(() => { document.title = `${step.label} · FAT`; }, [step]);
+  useEffect(() => { document.title = `${step.label} · HĐH`; }, [step]);
 
   const finished = LESSONS.filter((s) => done.has(s.id)).length;
   const pct = Math.round((finished / LESSONS.length) * 100);
@@ -155,7 +164,7 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <div className="topbar-inner">
-          <a className="brand" href="#bat-dau"><span className="brand-mark" aria-hidden="true">FAT</span><span>Giải bài tập hệ thống tập tin</span></a>
+          <a className="brand" href="#bat-dau"><span className="brand-mark" aria-hidden="true">HĐH</span><span>Giải bài tập tập tin và tiến trình</span></a>
           <div className="progress" title={`Đã xong ${finished}/${LESSONS.length} bước`}>
             <span className="progress-text">{finished}/{LESSONS.length} bước</span>
             <span className="progress-bar" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Tiến độ học">

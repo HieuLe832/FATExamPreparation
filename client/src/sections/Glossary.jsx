@@ -21,6 +21,15 @@ const TERMS = [
   ["Mảnh tên dài (entry phụ)", "Entry có byte 0B = 0F, chứa tối đa 13 chữ của tên dài."],
   ["E5", "Byte đầu entry là E5: tập tin đã xóa."],
   ["Thuộc tính", "Byte 0B của entry, là tổng các cờ R 01, H 02, S 04, V 08, D 10, A 20."],
+  ["Tiến trình", "Một chương trình đang chạy (P1, P2…). Luân phiên dùng CPU và làm I/O."],
+  ["CPU burst", "Một lượt dùng CPU; số trong bảng là số đơn vị thời gian của lượt đó."],
+  ["I/O", "Nhập xuất (đọc đĩa, in…). Lúc làm I/O tiến trình không cần CPU."],
+  ["Ready List (RL)", "Hàng chờ CPU: các tiến trình đã sẵn sàng, chỉ thiếu CPU."],
+  ["SJF", "Shortest Job First: chọn tiến trình cần CPU ít nhất."],
+  ["Không độc quyền", "Tiến trình đang chạy có thể bị giành CPU khi có tiến trình ngắn hơn vào RL."],
+  ["FIFO (FCFS)", "Đến trước phục vụ trước. Dùng cho thiết bị R1, R2 trong bài 1."],
+  ["Sơ đồ Gantt", "Thanh thời gian ghi tiến trình nào dùng CPU (hoặc thiết bị) từ lúc nào đến lúc nào."],
+  ["Thời gian chờ (WT)", "Tổng thời gian tiến trình nằm trong RL mà chưa được CPU."],
 ];
 
 export default function Glossary() {
